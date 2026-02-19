@@ -1,4 +1,4 @@
-# SISCONT - Deploy V18 (SCORCHED EARTH RECONSTRUCTION) - 19/02/2026 15:15
+# SISCONT - Deploy V19 (ABYSSAL ABANDONMENT) - 19/02/2026 15:30
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,7 +8,7 @@ from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes,
 
 
 def run_enum_migration():
-    """Reconstrói fisicamente as colunas para eliminar OIDs fantasmas do Postgres."""
+    """Migra dados para colunas novas (v19) para abandonar as corrompidas."""
     import traceback
     from sqlalchemy import text
     from app.database import engine
@@ -21,8 +21,7 @@ def run_enum_migration():
             print("CACHE NUKE: Clearing Postgres session caches...")
             conn.execute(text("DISCARD ALL;"))
             conn.execute(text("DEALLOCATE ALL;"))
-            conn.execute(text("SET lock_timeout = '40s';"))
-            conn.execute(text("SET statement_timeout = '80s';"))
+            conn.execute(text("SET lock_timeout = '50s';"))
             
             # Encerrar outras conexões
             try:
@@ -32,58 +31,42 @@ def run_enum_migration():
                 """))
             except: pass
 
-            target_cols = [
-                ("vendas", "status"),
-                ("vendas", "modalidade"),
-                ("propostas", "status"),
-                ("contratos", "status"),
-                ("empenhos", "status"),
-                ("pedidos", "status"),
-                ("notas_fiscais", "status_entrega"),
-                ("solicitacoes_custo", "status"),
-                ("usuarios", "perfil")
+            # Lista de migração: (Tabela, ColunaAntiga, ColunaNova)
+            migration_plan = [
+                ("vendas", "status", "status_v19"),
+                ("vendas", "modalidade", "modalidade_v19"),
+                ("propostas", "status", "status_v19"),
+                ("contratos", "status", "status_v19"),
+                ("empenhos", "status", "status_v19"),
+                ("pedidos", "status", "status_v19"),
+                ("notas_fiscais", "status_entrega", "status_entrega_v19"),
+                ("solicitacoes_custo", "status", "status_v19"),
+                ("usuarios", "perfil", "perfil_v19")
             ]
 
-            print("SCORCHED EARTH: Reconstructing columns to purge Ghost OIDs...")
-            for table, col in target_cols:
+            print("ABYSSAL ABANDONMENT: Creating new columns and migrating data...")
+            for table, old_col, new_col in migration_plan:
                 try:
-                    # 1. Verificar se a coluna antiga existe e NÃO é VARCHAR(100) ainda
-                    res = conn.execute(text(f"""
-                        SELECT data_type FROM information_schema.columns 
-                        WHERE table_name='{table}' AND column_name='{col}'
-                    """)).fetchone()
+                    # 1. Garantir que a coluna NOVA existe (VARCHAR 100)
+                    res = conn.execute(text(f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{new_col}'")).fetchone()
+                    if not res:
+                        print(f"   -> Creating {table}.{new_col}")
+                        conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "{new_col}" VARCHAR(100)'))
                     
-                    # Se não for VARCHAR ou se for um OID fantasma (detectado por auditoria prévia)
-                    # Forçamos a reconstrução uma vez.
+                    # 2. Migrar dados da antiga para a nova (se a antiga existir)
+                    old_exists = conn.execute(text(f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{old_col}'")).fetchone()
+                    if old_exists:
+                        print(f"   -> Migrating {table}.{old_col} to {new_col}")
+                        conn.execute(text(f'UPDATE "{table}" SET "{new_col}" = "{old_col}"::TEXT WHERE "{new_col}" IS NULL'))
                     
-                    print(f"   -> Processing {table}.{col} (current type: {res[0] if res else 'None'})")
-                    
-                    # Renomear -> Criar nova -> Copiar -> Dropar antiga
-                    conn.execute(text(f'ALTER TABLE "{table}" RENAME COLUMN "{col}" TO "{col}_old_v18"'))
-                    conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{col}" VARCHAR(100)'))
-                    conn.execute(text(f'UPDATE "{table}" SET "{col}" = "{col}_old_v18"::TEXT'))
-                    conn.execute(text(f'ALTER TABLE "{table}" DROP COLUMN "{col}_old_v18" CASCADE'))
-                    
-                    print(f"      ✅ RECONSTRUCTED {table}.{col}")
+                    print(f"      ✅ Migrated {table}.{new_col}")
                 except Exception as e:
-                    print(f"      ⚠️ Skip/Error in {table}.{col}: {e}")
+                    print(f"      ⚠️ Skip/Error in {table}.{new_col}: {e}")
 
-            # Cleanup Types
-            print("CLEANUP: Dropping enum types...")
-            try:
-                res = conn.execute(text("SELECT typname FROM pg_type WHERE typname LIKE '%enum%'"))
-                for row in res:
-                    try:
-                        conn.execute(text(f'DROP TYPE IF EXISTS "{row[0]}" CASCADE'))
-                    except: pass
-            except: pass
-
-            conn.execute(text("ANALYZE;"))
-            conn.execute(text("DISCARD ALL;"))
-            print("MIGRAÇÃO V18 CONCLUÍDA. ✅")
+            print("MIGRAÇÃO V19 (ABANDONMENT) CONCLUÍDA. ✅")
             
     except Exception:
-        print("Erro crítico na migração V18:")
+        print("Erro crítico na migração V19:")
         traceback.print_exc()
 
 
@@ -130,16 +113,7 @@ async def debug_db_schema():
                 SELECT table_name, column_name, data_type 
                 FROM information_schema.columns 
                 WHERE table_name IN ({','.join([f"'{t}'" for t in target_tables])})
-                AND (column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
+                AND (column_name LIKE '%v19%' OR column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
             """)).fetchall()
-            oid_res = conn.execute(text("""
-                SELECT 'type_detail' as category, typname || ' (ns:' || typnamespace::text || ', cat:' || typcategory || ')' as name 
-                FROM pg_type WHERE oid = 21978
-                UNION ALL
-                SELECT 'attr_atttypid' as category, relname || '.' || attname as name FROM pg_attribute a JOIN pg_class c ON a.attrelid = c.oid WHERE atttypid = 21978
-            """)).fetchall()
-            return {
-                "columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res],
-                "oid_hunt_21978": [{"category": r[0], "name": r[1]} for r in oid_res]
-            }
+            return {"columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res]}
     except Exception as e: return {"error": str(e)}

@@ -24,7 +24,7 @@ class Contrato(Base):
     data_vigencia: Mapped[date | None] = mapped_column(Date, nullable=True)
     data_envio_sei_contratos: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[ContratoStatusEnum] = mapped_column(
-        SAEnum(ContratoStatusEnum, native_enum=False), default=ContratoStatusEnum.ativo, nullable=False, index=True
+        SAEnum(ContratoStatusEnum, native_enum=False), name="status_v19", default=ContratoStatusEnum.ativo, nullable=False, index=True
     )
     objeto: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -22,7 +22,7 @@ class Proposta(Base):
     revisao: Mapped[str | None] = mapped_column(String(20), nullable=True)
     valor: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
     status: Mapped[PropostaStatusEnum] = mapped_column(
-        SAEnum(PropostaStatusEnum, native_enum=False), default=PropostaStatusEnum.pendente, nullable=False, index=True
+        SAEnum(PropostaStatusEnum, native_enum=False), name="status_v19", default=PropostaStatusEnum.pendente, nullable=False, index=True
     )
     data_emissao: Mapped[date | None] = mapped_column(Date, nullable=True)
     data_vencimento: Mapped[date | None] = mapped_column(Date, nullable=True)

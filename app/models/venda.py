@@ -29,10 +29,10 @@ class Venda(Base):
     processo_sei: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     objeto: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[VendaStatusEnum] = mapped_column(
-        SAEnum(VendaStatusEnum, native_enum=False), default=VendaStatusEnum.em_andamento, nullable=False, index=True
+        SAEnum(VendaStatusEnum, native_enum=False), name="status_v19", default=VendaStatusEnum.em_andamento, nullable=False, index=True
     )
     modalidade: Mapped[ModalidadeEnum] = mapped_column(
-        SAEnum(ModalidadeEnum, native_enum=False), default=ModalidadeEnum.venda, nullable=False, index=True
+        SAEnum(ModalidadeEnum, native_enum=False), name="modalidade_v19", default=ModalidadeEnum.venda, nullable=False, index=True
     )
     valor_total: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
 
