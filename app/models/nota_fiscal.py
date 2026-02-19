@@ -11,8 +11,8 @@ from app.models.venda import Venda, VendaStatusEnum
 
 class NFEStatusEntregaEnum(str, enum.Enum):
     pendente = "pendente"
-    parcial = "entrega parcial"
-    total = "entrega total"
+    parcial = "parcial"
+    total = "total"
 
 
 class NotaFiscal(Base):

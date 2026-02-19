@@ -35,7 +35,7 @@ def run_enum_migration():
         "contratostatusenum": ["ativo", "encerrado", "cancelado"],
         "empenhostatusenum": ["pendente", "emitido", "cancelado"],
         "pedidostatusenum": ["pendente", "finalizado"],
-        "nfestatusentregaenum": ["pendente", "entrega parcial", "entrega total"],
+        "nfestatusentregaenum": ["pendente", "parcial", "total"],
         "solicitacaocustostatusenum": ["pendente", "aprovada", "recusada"],
     }
     
@@ -92,9 +92,9 @@ def run_enum_migration():
                 "UPDATE vendas SET status = 'em_andamento' WHERE status IS NULL OR UPPER(status) NOT IN ('EM_ANDAMENTO', 'AGUARDANDO_PROPOSTA', 'AGUARDANDO_EMPENHO', 'FATURADO', 'FINALIZADA', 'CANCELADA', 'EM ANDAMENTO', 'AGUARDANDO PROPOSTA', 'AGUARDANDO EMPENHO');",
                 "UPDATE vendas SET status = LOWER(status) WHERE status IS NOT NULL;",
                 "UPDATE vendas SET status = 'em_andamento' WHERE status = 'em andando' OR status = 'em andamento';",
-                "UPDATE notas_fiscais SET status_entrega = 'entrega parcial' WHERE UPPER(status_entrega) IN ('ENTREGA PARCIAL', 'PARCIAL');",
-                "UPDATE notas_fiscais SET status_entrega = 'entrega total' WHERE UPPER(status_entrega) IN ('ENTREGA TOTAL', 'TOTAL');",
-                "UPDATE notas_fiscais SET status_entrega = 'pendente' WHERE status_entrega NOT IN ('pendente', 'entrega parcial', 'entrega total');"
+                "UPDATE notas_fiscais SET status_entrega = 'parcial' WHERE UPPER(status_entrega) IN ('ENTREGA PARCIAL', 'PARCIAL');",
+                "UPDATE notas_fiscais SET status_entrega = 'total' WHERE UPPER(status_entrega) IN ('ENTREGA TOTAL', 'TOTAL');",
+                "UPDATE notas_fiscais SET status_entrega = 'pendente' WHERE status_entrega NOT IN ('pendente', 'parcial', 'total');"
             ]
             
             for query in normalization_queries:
