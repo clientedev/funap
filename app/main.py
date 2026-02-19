@@ -1,5 +1,4 @@
-# SISCONT - Deploy V25 (VERIFICATION BUILD) - 19/02/2026 17:50
-import traceback
+# SISCONT - Deploy V26 (PRODUCTION LOCKDOWN) - 19/02/2026 17:55
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -15,10 +14,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="SisCont", version="1.0.0", lifespan=lifespan)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # Restaura o comportamento de redirecionamento para o usuário final
+    if exc.status_code == 401: return RedirectResponse(url="/login")
+    if exc.status_code == 403: return RedirectResponse(url="/dashboard")
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import traceback
-    return JSONResponse(status_code=500, content={"detail": str(exc), "trace": traceback.format_exc()})
+    # Mantemos o log detalhado no 500 para debug interno se algo novo quebrar
+    print(f"CRITICAL ERROR: {traceback.format_exc()}")
+    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor", "error": str(exc)})
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -29,23 +37,3 @@ app.include_router(usuarios.router)
 app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
-
-@app.get("/seed-database")
-async def seed_database():
-    from app.seed_test_data import seed_data
-    try:
-        seed_data()
-        return {"status": "Database Seeded"}
-    except Exception as e:
-        return {"error": str(e), "trace": traceback.format_exc()}
-
-@app.get("/debug-db-schema")
-async def debug_db_schema():
-    from sqlalchemy import text, inspect
-    from app.database import engine
-    try:
-        with engine.connect() as conn:
-            oid = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
-            tables = inspect(engine).get_table_names()
-            return {"oid": oid[0] if oid else "NOT FOUND", "tables": tables}
-    except Exception as e: return {"error": str(e)}
