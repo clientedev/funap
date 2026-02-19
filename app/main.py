@@ -73,8 +73,17 @@ app.include_router(linhas_produto.router)
 
 @app.get("/panic-recovery")
 async def panic_recovery():
-    res = execute_recovery()
-    return {"status": "Panic Recovery Executed", "details": res}
+    return {"details": execute_recovery()}
+
+@app.get("/seed-database")
+async def seed_database():
+    """Populador de dados remoto para testes de fluxo."""
+    from app.seed_test_data import seed_data
+    try:
+        seed_data()
+        return {"status": "Database Seeded Successfully"}
+    except Exception as e:
+        return {"error": str(e), "trace": traceback.format_exc()}
 
 @app.get("/debug-db-schema")
 async def debug_db_schema():
