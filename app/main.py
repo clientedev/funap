@@ -41,22 +41,7 @@ def run_enum_migration():
     
     try:
         with engine.connect() as conn:
-            # 1. Garantir que as colunas existem (caso tenham sido dropadas pelo CASCADE anterior)
-            for table, col, _, default_val in target_columns:
-                try:
-                    # Verifica se a coluna existe
-                    res = conn.execute(text(
-                        f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
-                    )).fetchone()
-                    
-                    if not res:
-                        print(f"[REPAIR] Coluna {table}.{col} não existe. Recriando...")
-                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} TEXT DEFAULT {default_val};"))
-                        conn.commit()
-                except Exception:
-                    conn.rollback()
-
-            # 2. Remover DEFAULTS e converter para TEXT para evitar bloqueios do PG
+            # 1. Remover DEFAULTS e converter para TEXT para tentar evitar o CASCADE no DROP TYPE
             for table, col, _, _ in target_columns:
                 try:
                     conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
@@ -65,33 +50,37 @@ def run_enum_migration():
                 except Exception:
                     conn.rollback()
             
-            # 3. Dropar e Recriar os Tipos ENUM
+            # 2. Dropar e Recriar os Tipos ENUM
             for type_name, labels in enums_to_recreate.items():
                 labels_str = ", ".join([f"'{l}'" for l in labels])
                 try:
-                    # Tenta dropar sem CASCADE primeiro. Se falhar, usa CASCADE mas já protegemos os dados acima
-                    conn.execute(text(f"DROP TYPE IF EXISTS {type_name};"))
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
-                    try:
-                        conn.execute(text(f"DROP TYPE IF EXISTS {type_name} CASCADE;"))
-                        conn.commit()
-                    except Exception:
-                        conn.rollback()
-                
-                try:
+                    conn.execute(text(f"DROP TYPE IF EXISTS {type_name} CASCADE;"))
                     conn.execute(text(f"CREATE TYPE {type_name} AS ENUM ({labels_str});"))
                     conn.commit()
                 except Exception:
                     conn.rollback()
             
+            # 3. GARANTIR que as colunas existem (caso o CASCADE tenha dropado elas apesar da conversão para TEXT)
+            for table, col, _, default_val in target_columns:
+                try:
+                    # Verifica se a coluna existe no schema público
+                    res = conn.execute(text(
+                        f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
+                    )).fetchone()
+                    
+                    if not res:
+                        print(f"[REPAIR] Coluna {table}.{col} não existe após o reset de enums. Recriando como TEXT...")
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} TEXT DEFAULT {default_val};"))
+                        conn.commit()
+                except Exception:
+                    conn.rollback()
+
             # 4. Normalizar os dados (garantir que estão nos labels permitidos e em minúsculo)
             # Focamos na normalização de tabelas principais
             normalization_queries = [
                 "UPDATE vendas SET status = 'em_andamento' WHERE status IS NULL OR UPPER(status) NOT IN ('EM_ANDAMENTO', 'AGUARDANDO_PROPOSTA', 'AGUARDANDO_EMPENHO', 'FATURADO', 'FINALIZADA', 'CANCELADA', 'EM ANDAMENTO', 'AGUARDANDO PROPOSTA', 'AGUARDANDO EMPENHO');",
-                "UPDATE vendas SET status = LOWER(status) WHERE status IS NOT NULL;",
                 "UPDATE vendas SET status = 'em_andamento' WHERE status = 'em andando' OR status = 'em andamento';",
+                "UPDATE vendas SET status = LOWER(status) WHERE status IS NOT NULL;",
                 "UPDATE notas_fiscais SET status_entrega = 'parcial' WHERE UPPER(status_entrega) IN ('ENTREGA PARCIAL', 'PARCIAL');",
                 "UPDATE notas_fiscais SET status_entrega = 'total' WHERE UPPER(status_entrega) IN ('ENTREGA TOTAL', 'TOTAL');",
                 "UPDATE notas_fiscais SET status_entrega = 'pendente' WHERE status_entrega NOT IN ('pendente', 'parcial', 'total');"
@@ -115,12 +104,10 @@ def run_enum_migration():
             # 5. Converter de volta para os tipos ENUM e restaurar DEFAULTS
             for table, col, type_name, default_val in target_columns:
                 try:
-                    # Cast forçado para o tipo enum
                     conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
                     conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
                     conn.commit()
                 except Exception:
-                    print(f"[MIGRATION WARNING] Falha ao reconverter {table}.{col}: {traceback.format_exc()}")
                     conn.rollback()
 
             # 6. Atualizar PerfilEnum
@@ -129,16 +116,15 @@ def run_enum_migration():
                 conn.execute(text("ALTER TYPE perfilenum ADD VALUE IF NOT EXISTS 'financeiro';"))
                 conn.commit()
             except Exception:
-                    conn.rollback()
-
-        print("[MIGRATION] Safe enum migration and repair completed.")
+                conn.rollback()
     except Exception:
-        print(f"[MIGRATION ERROR] {traceback.format_exc()}")
-
+        print("Erro crítico na migração de enums:")
+        traceback.print_exc()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_enum_migration()
+    yield
     yield
 
 
