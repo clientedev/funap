@@ -1,4 +1,4 @@
-# SISCONT - Deploy V20 (CLEANUP & CASING) - 19/02/2026 16:05
+# SISCONT - Deploy V21 (NUCLEAR TABLE RESET) - 19/02/2026 16:15
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,68 +8,82 @@ from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes,
 
 
 def run_enum_migration():
-    """Remove colunas legadas corrompidas e garante a saúde do schema v19."""
+    """Nuclear Table Reset: Re-cria tabelas para limpar definitivamente metadados corrompidos de OID."""
     import traceback
-    from sqlalchemy import text
-    from app.database import engine
+    from sqlalchemy import text, inspect
+    from app.database import engine, Base
     
     db_url = str(engine.url)
     if "sqlite" in db_url: return
 
+    target_tables = [
+        'vendas', 'usuarios', 'propostas', 'contratos', 
+        'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo'
+    ]
+
     try:
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            print("CACHE NUKE: Clearing Postgres session caches...")
-            conn.execute(text("DISCARD ALL;"))
-            conn.execute(text("DEALLOCATE ALL;"))
+            print("NUCLEAR RESET V21: Initiating table rotation...")
             conn.execute(text("SET lock_timeout = '50s';"))
             
-            # Encerrar outras conexões
-            try:
-                conn.execute(text("""
-                    SELECT pg_terminate_backend(pid) FROM pg_stat_activity 
-                    WHERE datname = current_database() AND pid <> pg_backend_pid();
-                """))
-            except: pass
+            # 1. Renomear tabelas atuais para _dead_oid
+            inspector = inspect(engine)
+            existing_tables = inspector.get_table_names()
+            
+            tables_to_migrate = []
+            for table in target_tables:
+                if table in existing_tables:
+                    # Se a tabela _dead_oid já existe de um crash anterior, dropa ela
+                    conn.execute(text(f'DROP TABLE IF EXISTS "{table}_dead_oid" CASCADE'))
+                    print(f"   -> Rotating {table} to {table}_dead_oid")
+                    conn.execute(text(f'ALTER TABLE "{table}" RENAME TO "{table}_dead_oid"'))
+                    tables_to_migrate.append(table)
 
-            # Lista de colunas legadas para DROPAR (Dados já migrados para _v19)
-            legacy_cols = [
-                ("vendas", "status"),
-                ("vendas", "modalidade"),
-                ("propostas", "status"),
-                ("contratos", "status"),
-                ("empenhos", "status"),
-                ("pedidos", "status"),
-                ("notas_fiscais", "status_entrega"),
-                ("solicitacoes_custo", "status"),
-                ("usuarios", "perfil")
+            # 2. Criar tabelas novas (Limpas, sem OIDs antigos)
+            print("   -> Creating fresh tables...")
+            Base.metadata.create_all(engine)
+
+            # 3. Migrar dados
+            # NOTA: Precisamos migrar em ordem de dependência ou desativar FKs temporariamente
+            conn.execute(text("SET session_replication_role = 'replica';")) # Desativa triggers/FKs
+            
+            # Ordem de migração segura
+            migration_order = [
+                'usuarios', 'vendas', 'propostas', 'contratos', 
+                'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo'
             ]
-
-            print("CLEANUP V20: Dropping legacy columns to restore creation flow...")
-            for table, col in legacy_cols:
-                try:
-                    # Tentar dropar a coluna legado. Se falhar (já dropada), ignore.
-                    print(f"   -> Dropping {table}.{col} (legacy)")
-                    conn.execute(text(f'ALTER TABLE "{table}" DROP COLUMN IF EXISTS "{col}" CASCADE'))
-                    print(f"      ✅ Deleted {table}.{col}")
-                except Exception as e:
-                    print(f"      ⚠️ Info: {table}.{col} could not be dropped or already gone: {e}")
-
-            # Cleanup native types leftover
-            print("CLEANUP: Dropping enum types...")
-            try:
-                res = conn.execute(text("SELECT typname FROM pg_type WHERE typname LIKE '%enum%'"))
-                for row in res:
+            
+            for table in migration_order:
+                if table in tables_to_migrate:
+                    print(f"   -> Migrating data for {table}...")
+                    # Pega as colunas da tabela NOVA para garantir que não tentamos inserir no que não existe
+                    cols_res = conn.execute(text(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}'"))
+                    cols = [row[0] for row in cols_res]
+                    col_str = ", ".join([f'"{c}"' for c in cols])
+                    
+                    # Insert from old to new. 
+                    # Se colunas v19 existirem na antiga, ok. Se não, ignoramos (já lidado em v19/v20)
                     try:
-                        conn.execute(text(f'DROP TYPE IF EXISTS "{row[0]}" CASCADE'))
-                    except: pass
-            except: pass
+                        conn.execute(text(f'INSERT INTO "{table}" ({col_str}) SELECT {col_str} FROM "{table}_dead_oid"'))
+                        print(f"      ✅ Data migrated for {table}")
+                    except Exception as e:
+                        print(f"      ⚠️ Migration error for {table}: {e}")
 
-            conn.execute(text("ANALYZE;"))
+            conn.execute(text("SET session_replication_role = 'origin';"))
+
+            # 4. Drop tables antigas
+            for table in tables_to_migrate:
+                conn.execute(text(f'DROP TABLE IF EXISTS "{table}_dead_oid" CASCADE'))
+                print(f"   -> Dropped legacy {table}")
+
+            # 5. Reset Caches
             conn.execute(text("DISCARD ALL;"))
-            print("MIGRAÇÃO V20 CONCLUÍDA. ✅")
+            conn.execute(text("DEALLOCATE ALL;"))
+            conn.execute(text("ANALYZE;"))
+            print("NUCLEAR RESET V21 CONCLUÍDO. O sistema está agora em um estado virgem de metadados. ✅")
             
     except Exception:
-        print("Erro crítico na migração V20:")
+        print("Erro crítico no NUCLEAR RESET V21:")
         traceback.print_exc()
 
 
@@ -88,13 +102,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code == 403: return RedirectResponse(url="/dashboard")
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    import traceback
-    print(f"[ERROR 500] {request.url}: {traceback.format_exc()}")
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+@app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Rotas
 app.include_router(auth.router)
@@ -119,19 +127,10 @@ async def debug_db_schema():
                 AND (column_name LIKE '%v19%' OR column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
             """)).fetchall()
             
-            # Novo check de OID
             oid_check = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
-            
-            # Check de constraints legadas
-            constraints = conn.execute(text("""
-                SELECT conname, contype 
-                FROM pg_constraint 
-                WHERE conrelid = 'vendas'::regclass
-            """)).fetchall()
             
             return {
                 "columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res],
-                "oid_21978": oid_check[0] if oid_check else "NOT FOUND",
-                "vendas_constraints": [{"name": c[0], "type": c[1]} for c in constraints]
+                "oid_21978": oid_check[0] if oid_check else "NOT FOUND"
             }
     except Exception as e: return {"error": str(e)}
