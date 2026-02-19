@@ -1,4 +1,4 @@
-# SISCONT - Deploy V5 (Safe Migration) - 19/02/2026 14:05
+# SISCONT - Deploy V6 (Robust Autocommit) - 19/02/2026 14:08
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,7 +8,7 @@ from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes,
 
 
 def run_enum_migration():
-    """Migra enums do PostgreSQL de forma segura e não destrutiva."""
+    """Migra enums do PostgreSQL de forma segura usando AUTOCOMMIT para evitar cache lookup failures."""
     import traceback
     from sqlalchemy import text
     from app.database import engine
@@ -30,29 +30,25 @@ def run_enum_migration():
     }
     
     try:
-        with engine.connect() as conn:
-            # 1. Garantir que os TIPOS existem e têm todos os valores
+        # IMPORTANTE: Usar AUTOCOMMIT para comandos de TYPE no Postgres
+        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            # 1. Garantir que os TIPOS existem
             for type_name, labels in enums_to_check.items():
                 try:
-                    # Verifica se o tipo existe
                     res = conn.execute(text(f"SELECT 1 FROM pg_type WHERE typname = '{type_name}'")).fetchone()
                     if not res:
                         labels_str = ", ".join([f"'{l}'" for l in labels])
                         conn.execute(text(f"CREATE TYPE {type_name} AS ENUM ({labels_str});"))
                     else:
-                        # Adiciona valores faltantes um por um (Não destrutivo)
                         for label in labels:
                             try:
                                 conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS '{label}';"))
-                                conn.commit()
                             except Exception:
-                                conn.rollback()
-                    conn.commit()
+                                pass # Já existe ou outro erro menor
                 except Exception:
-                    conn.rollback()
+                    print(f"Erro ao processar tipo {type_name}")
 
-            # 2. Normalizar dados e Garantir Colunas
-            # (Tabela, Coluna, Tipo, Default)
+            # 2. Normalizar e Reparar Colunas
             target_cols = [
                 ("vendas", "status", "vendastatusenum", "'em_andamento'"),
                 ("vendas", "modalidade", "modalidadeenum", "'venda'"),
@@ -67,7 +63,7 @@ def run_enum_migration():
 
             for table, col, type_name, default_val in target_cols:
                 try:
-                    # Verifica se coluna existe
+                    # Garantir que a coluna existe
                     res = conn.execute(text(
                         f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
                     )).fetchone()
@@ -75,37 +71,40 @@ def run_enum_migration():
                     if not res:
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {type_name} DEFAULT {default_val};"))
                     else:
-                        # Normaliza para lowercase antes de converter se necessário
+                        # Normalizar dados antes de converter
                         conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}::TEXT) WHERE {col} IS NOT NULL;"))
-                        # Garante o TYPE (Caso esteja como TEXT ou similar)
+                        # Converter tipo de forma segura
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
+                except Exception as e:
+                    print(f"Erro ao reparar coluna {table}.{col}: {e}")
 
-            # 3. REPARO EXTRA: Colunas críticas faltantes
-            try:
-                extra_cols = [
-                    ("vendas", "processo_sei", "VARCHAR(50)"),
-                    ("vendas", "objeto", "TEXT"),
-                    ("vendas", "valor_total", "NUMERIC(15,2)"),
-                    ("propostas", "data_emissao", "DATE"),
-                    ("propostas", "data_vencimento", "DATE"),
-                    ("propostas", "valor", "NUMERIC(15,2)"),
-                    ("propostas", "numero", "VARCHAR(50)"),
-                    ("propostas", "revisao", "VARCHAR(20)")
-                ]
-                for table, col, col_type in extra_cols:
+            # 3. Colunas extras importantes
+            extra_cols = [
+                ("vendas", "processo_sei", "VARCHAR(50)"),
+                ("vendas", "objeto", "TEXT"),
+                ("vendas", "valor_total", "NUMERIC(15,2)"),
+                ("propostas", "data_emissao", "DATE"),
+                ("propostas", "data_vencimento", "DATE"),
+                ("propostas", "valor", "NUMERIC(15,2)"),
+                ("propostas", "numero", "VARCHAR(50)"),
+                ("propostas", "revisao", "VARCHAR(20)")
+            ]
+            for table, col, col_type in extra_cols:
+                try:
                     res = conn.execute(text(
                         f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
                     )).fetchone()
                     if not res:
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type};"))
-                conn.commit()
-            except Exception:
-                conn.rollback()
+                except Exception:
+                    pass
+
+            # Limpar caches de sessão para esta conexão antes de fechar
+            conn.execute(text("DISCARD ALL;"))
+            
     except Exception:
-        print("Erro na migração segura de enums:")
+        print("Erro na migração AUTOCOMMIT de enums:")
         traceback.print_exc()
 
 @asynccontextmanager
