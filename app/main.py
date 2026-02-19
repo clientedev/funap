@@ -1,4 +1,4 @@
-# SISCONT - Deploy V31 (SURGICAL CLEANUP) - 19/02/2026 16:55
+# SISCONT - Deploy V32 (GLOBAL forensic) - 19/02/2026 17:10
 import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -7,34 +7,8 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes, linhas_produto
 
-def execute_surgical_cleanup():
-    """Remove defaults corrompidos que referenciam o OID fantasma 21978."""
-    from sqlalchemy import text
-    from app.database import engine
-    if "sqlite" in str(engine.url): return
-    try:
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            print("V31 SURGERY: Dropping corrupted defaults...")
-            # 1. Drop de defaults perigosos
-            conn.execute(text('ALTER TABLE "vendas" ALTER COLUMN "status_v19" DROP DEFAULT'))
-            conn.execute(text('ALTER TABLE "vendas" ALTER COLUMN "modalidade_v19" DROP DEFAULT'))
-            conn.execute(text('ALTER TABLE "usuarios" ALTER COLUMN "perfil_v19" DROP DEFAULT'))
-            
-            # 2. Set de defaults limpos (String Literals)
-            conn.execute(text("ALTER TABLE \"vendas\" ALTER COLUMN \"status_v19\" SET DEFAULT 'em_andamento'"))
-            conn.execute(text("ALTER TABLE \"vendas\" ALTER COLUMN \"modalidade_v19\" SET DEFAULT 'venda'"))
-            conn.execute(text("ALTER TABLE \"usuarios\" ALTER COLUMN \"perfil_v19\" SET DEFAULT 'usuario'"))
-            
-            # 3. Purga final
-            conn.execute(text("DISCARD ALL;"))
-            conn.execute(text("DEALLOCATE ALL;"))
-            print("V31 SURGERY: SUCCESS. Defaults replaced with safe literals. ✅")
-    except Exception as e:
-        print(f"V31 SURGERY ERROR: {e}")
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    execute_surgical_cleanup()
     yield
 
 app = FastAPI(title="SisCont", version="1.0.0", lifespan=lifespan)
@@ -55,22 +29,43 @@ app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
 
-@app.get("/seed-database")
-async def seed_database():
-    from app.seed_test_data import seed_data
-    try:
-        seed_data()
-        return {"status": "Database Seeded Successfully"}
-    except Exception as e:
-        return {"error": str(e), "trace": traceback.format_exc()}
-
 @app.get("/debug-db-schema")
 async def debug_db_schema():
-    from sqlalchemy import text, inspect
+    from sqlalchemy import text
     from app.database import engine
     try:
         with engine.connect() as conn:
-            oid = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
-            tables = inspect(engine).get_table_names()
-            return {"oid": oid[0] if oid else "NOT FOUND", "tables": tables}
-    except Exception as e: return {"error": str(e)}
+            GHOST_OID = 21978
+            
+            # 1. Identificar TODAS as relações que dependem do ghost
+            deps = conn.execute(text(f"""
+                SELECT 
+                    c.relname as table_name,
+                    a.attname as column_name,
+                    d.objsubid as column_num,
+                    d.classid::regclass as class,
+                    d.deptype
+                FROM pg_depend d
+                LEFT JOIN pg_class c ON d.objid = c.oid
+                LEFT JOIN pg_attribute a ON d.objid = a.attrelid AND d.objsubid = a.attnum
+                WHERE d.refobjid = {GHOST_OID} OR d.objid = {GHOST_OID};
+            """)).fetchall()
+            
+            # 2. Verificar pg_type pra ver se algum OUTRO tipo tem dependência
+            type_deps = conn.execute(text(f"""
+                SELECT typname, oid FROM pg_type WHERE oid IN (
+                    SELECT objid FROM pg_depend WHERE refobjid = {GHOST_OID}
+                );
+            """)).fetchall()
+
+            return {
+                "ghost_oid": GHOST_OID,
+                "all_dependencies": [
+                    {"table": d[0], "column": d[1], "col_num": d[2], "class": str(d[3]), "type": d[4]} 
+                    for d in deps
+                ],
+                "dependent_types": [{"name": t[0], "oid": t[1]} for t in type_deps]
+            }
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "trace": traceback.format_exc()}
