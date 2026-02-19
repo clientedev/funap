@@ -74,6 +74,20 @@ def seed_data():
         db.refresh(user_dicom)
         db.refresh(user_dipro)
 
+        # 2.1 Usuário Gabriel (Teste Real)
+        user_gabriel = db.query(Usuario).filter(Usuario.email == "gabriel@funap.com.br").first()
+        if not user_gabriel:
+            user_gabriel = Usuario(
+                nome="Gabriel Eduardo",
+                email="gabriel@funap.com.br",
+                senha_hash=get_password_hash("123456"),
+                perfil=PerfilEnum.admin,
+                diretoria_id=dicom.id
+            )
+            db.add(user_gabriel)
+            db.commit()
+            db.refresh(user_gabriel)
+
         # 3. Clientes
         clientes_data = [
             {"nome": "Secretaria da Administração Penitenciária (SAP)", "cnpj_cpf": "48.031.918/0001-24"},
