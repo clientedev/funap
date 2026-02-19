@@ -21,7 +21,7 @@ class Pedido(Base):
     data_pedido: Mapped[date | None] = mapped_column(Date, nullable=True)
     prazo_entrega: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[PedidoStatusEnum] = mapped_column(
-        SAEnum(PedidoStatusEnum), default=PedidoStatusEnum.pendente, nullable=False, index=True
+        SAEnum(PedidoStatusEnum, name="pedidostatusenum_v4"), default=PedidoStatusEnum.pendente, nullable=False, index=True
     )
     observacoes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

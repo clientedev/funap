@@ -1,4 +1,4 @@
-# SISCONT - Deploy V6 (Robust Autocommit) - 19/02/2026 14:08
+# SISCONT - Deploy V7 (Deep Reset) - 19/02/2026 14:15
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,7 +8,7 @@ from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes,
 
 
 def run_enum_migration():
-    """Migra enums do PostgreSQL de forma segura usando AUTOCOMMIT para evitar cache lookup failures."""
+    """Migra enums do PostgreSQL de forma segura usando nomes V4 para evitar cache lookup failures de OIDs antigos."""
     import traceback
     from sqlalchemy import text
     from app.database import engine
@@ -17,22 +17,23 @@ def run_enum_migration():
     if "sqlite" in db_url:
         return
     
+    # Names with _v4 suffix to guarantee fresh OIDs
     enums_to_check = {
-        "vendastatusenum": ["em_andamento", "aguardando_proposta", "aguardando_empenho", "faturado", "finalizada", "cancelada"],
-        "modalidadeenum": ["venda", "licitacao", "producao"],
-        "propostastatusenum": ["pendente", "aprovada", "cancelada"],
-        "contratostatusenum": ["ativo", "encerrado", "cancelado"],
-        "empenhostatusenum": ["pendente", "emitido", "cancelado"],
-        "pedidostatusenum": ["pendente", "finalizado"],
-        "nfestatusentregaenum": ["pendente", "parcial", "total"],
-        "solicitacaocustostatusenum": ["pendente", "aprovada", "recusada"],
-        "perfilenum": ["administrador", "consulta", "comercial", "financeiro"]
+        "vendastatusenum_v4": ["em_andamento", "aguardando_proposta", "aguardando_empenho", "faturado", "finalizada", "cancelada"],
+        "modalidadeenum_v4": ["venda", "licitacao", "producao"],
+        "propostastatusenum_v4": ["pendente", "aprovada", "cancelada"],
+        "contratostatusenum_v4": ["ativo", "encerrado", "cancelado"],
+        "empenhostatusenum_v4": ["pendente", "emitido", "cancelado"],
+        "pedidostatusenum_v4": ["pendente", "finalizado"],
+        "nfestatusentregaenum_v4": ["pendente", "parcial", "total"],
+        "solicitacaocustostatusenum_v4": ["pendente", "aprovada", "recusada"],
+        "perfilenum_v4": ["admin", "usuario", "comercial", "financeiro"]
     }
     
     try:
         # IMPORTANTE: Usar AUTOCOMMIT para comandos de TYPE no Postgres
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            # 1. Garantir que os TIPOS existem
+            # 1. Garantir que os TIPOS V4 existem
             for type_name, labels in enums_to_check.items():
                 try:
                     res = conn.execute(text(f"SELECT 1 FROM pg_type WHERE typname = '{type_name}'")).fetchone()
@@ -44,21 +45,21 @@ def run_enum_migration():
                             try:
                                 conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS '{label}';"))
                             except Exception:
-                                pass # Já existe ou outro erro menor
+                                pass
                 except Exception:
                     print(f"Erro ao processar tipo {type_name}")
 
-            # 2. Normalizar e Reparar Colunas
+            # 2. Normalizar e Reparar Colunas (mapeando para os novos tipos _v4)
             target_cols = [
-                ("vendas", "status", "vendastatusenum", "'em_andamento'"),
-                ("vendas", "modalidade", "modalidadeenum", "'venda'"),
-                ("propostas", "status", "propostastatusenum", "'pendente'"),
-                ("contratos", "status", "contratostatusenum", "'ativo'"),
-                ("empenhos", "status", "empenhostatusenum", "'pendente'"),
-                ("pedidos", "status", "pedidostatusenum", "'pendente'"),
-                ("notas_fiscais", "status_entrega", "nfestatusentregaenum", "'pendente'"),
-                ("solicitacoes_custo", "status", "solicitacaocustostatusenum", "'pendente'"),
-                ("usuarios", "perfil", "perfilenum", "'consulta'")
+                ("vendas", "status", "vendastatusenum_v4", "'em_andamento'"),
+                ("vendas", "modalidade", "modalidadeenum_v4", "'venda'"),
+                ("propostas", "status", "propostastatusenum_v4", "'pendente'"),
+                ("contratos", "status", "contratostatusenum_v4", "'ativo'"),
+                ("empenhos", "status", "empenhostatusenum_v4", "'pendente'"),
+                ("pedidos", "status", "pedidostatusenum_v4", "'pendente'"),
+                ("notas_fiscais", "status_entrega", "nfestatusentregaenum_v4", "'pendente'"),
+                ("solicitacoes_custo", "status", "solicitacaocustostatusenum_v4", "'pendente'"),
+                ("usuarios", "perfil", "perfilenum_v4", "'usuario'")
             ]
 
             for table, col, type_name, default_val in target_cols:
@@ -73,7 +74,7 @@ def run_enum_migration():
                     else:
                         # Normalizar dados antes de converter
                         conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}::TEXT) WHERE {col} IS NOT NULL;"))
-                        # Converter tipo de forma segura
+                        # Converter tipo para V4 de forma segura
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
                 except Exception as e:
@@ -100,11 +101,11 @@ def run_enum_migration():
                 except Exception:
                     pass
 
-            # Limpar caches de sessão para esta conexão antes de fechar
+            # Limpar caches para forçar recarga de metadados
             conn.execute(text("DISCARD ALL;"))
             
     except Exception:
-        print("Erro na migração AUTOCOMMIT de enums:")
+        print("Erro na migração V4 de enums:")
         traceback.print_exc()
 
 @asynccontextmanager
