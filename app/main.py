@@ -1,4 +1,4 @@
-# SISCONT - Deploy V24 (FINAL STABLE) - 19/02/2026 17:30
+# SISCONT - Deploy V25 (VERIFICATION BUILD) - 19/02/2026 17:50
 import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -29,3 +29,23 @@ app.include_router(usuarios.router)
 app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
+
+@app.get("/seed-database")
+async def seed_database():
+    from app.seed_test_data import seed_data
+    try:
+        seed_data()
+        return {"status": "Database Seeded"}
+    except Exception as e:
+        return {"error": str(e), "trace": traceback.format_exc()}
+
+@app.get("/debug-db-schema")
+async def debug_db_schema():
+    from sqlalchemy import text, inspect
+    from app.database import engine
+    try:
+        with engine.connect() as conn:
+            oid = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
+            tables = inspect(engine).get_table_names()
+            return {"oid": oid[0] if oid else "NOT FOUND", "tables": tables}
+    except Exception as e: return {"error": str(e)}
