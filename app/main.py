@@ -110,7 +110,18 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code == 401:
         return RedirectResponse(url="/login")
-    return RedirectResponse(url="/login") 
+    if exc.status_code == 403:
+        return RedirectResponse(url="/dashboard")
+    # Para outros erros (404, 500, etc), mostrar o erro real
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    import traceback
+    print(f"[ERROR 500] {request.url}: {traceback.format_exc()}")
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -123,7 +134,3 @@ app.include_router(usuarios.router)
 app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
-
-@app.get("/")
-def root():
-    return RedirectResponse(url="/dashboard")
