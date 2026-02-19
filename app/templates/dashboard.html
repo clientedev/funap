@@ -8,96 +8,122 @@
 <!-- Cards de Resumo -->
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
+        <div class="card border-0 shadow-sm h-100 bg-gradient-success text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="rounded-circle bg-white bg-opacity-25 p-3">
                         <i class="fas fa-shopping-cart fa-lg"></i>
                     </div>
-                    <span class="badge bg-white bg-opacity-25">Total: {{ metrics.resumo.total_vendas }}</span>
+                    <span class="badge bg-white bg-opacity-25 fw-normal">Histórico: {{ metrics.resumo.total_vendas
+                        }}</span>
                 </div>
-                <h6 class="text-white-50 small text-uppercase fw-bold">Vendas Ativas</h6>
-                <h2 class="fw-bold mb-0">{{ metrics.resumo.vendas_andamento }}</h2>
+                <h6 class="text-white-50 small text-uppercase fw-bold ls-1">Vendas Ativas</h6>
+                <h2 class="fw-bold mb-0 display-6">{{ metrics.resumo.vendas_andamento }}</h2>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body border-start border-4 border-primary">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary">
                         <i class="fas fa-check-double fa-lg"></i>
                     </div>
-                    <div class="text-success small"><i class="fas fa-arrow-up me-1"></i>Concluídas</div>
+                    <div class="text-success small fw-bold">Sucesso</div>
                 </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Finalizadas</h6>
-                <h2 class="fw-bold mb-0">{{ metrics.resumo.vendas_finalizadas }}</h2>
+                <h6 class="text-muted small text-uppercase fw-bold ls-1">Finalizadas</h6>
+                <h2 class="fw-bold mb-0 display-6">{{ metrics.resumo.vendas_finalizadas }}</h2>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body border-start border-4 border-warning">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning">
                         <i class="fas fa-file-invoice-dollar fa-lg"></i>
                     </div>
-                    <div class="text-warning small">Pendente</div>
+                    <div class="text-warning small fw-bold">Ação Req.</div>
                 </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Propostas Pen.</h6>
-                <h2 class="fw-bold mb-0">{{ metrics.resumo.propostas_pendentes }}</h2>
+                <h6 class="text-muted small text-uppercase fw-bold ls-1">Propostas Pend.</h6>
+                <h2 class="fw-bold mb-0 display-6">{{ metrics.resumo.propostas_pendentes }}</h2>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body border-start border-4 border-danger">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info">
-                        <i class="fas fa-box-open fa-lg"></i>
+                    <div class="rounded-circle bg-danger bg-opacity-10 p-3 text-danger">
+                        <i class="fas fa-times-circle fa-lg"></i>
                     </div>
-                    <div class="text-info small">Em Aberto</div>
+                    <div class="text-danger small fw-bold">Perdas</div>
                 </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Notas Parciais</h6>
-                <h2 class="fw-bold mb-0">{{ metrics.resumo.notas_parciais }}</h2>
+                <h6 class="text-muted small text-uppercase fw-bold ls-1">Canceladas</h6>
+                <h2 class="fw-bold mb-0 display-6">{{ metrics.resumo.vendas_canceladas }}</h2>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <!-- Gráfico de Evolução -->
     <div class="col-xl-8">
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-dark">Evolução de Vendas (Mensal)</h6>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><a class="dropdown-item" href="#">Exportar PDF</a></li>
-                        <li><a class="dropdown-item" href="#">Ver Dados</a></li>
-                    </ul>
-                </div>
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-line me-2 text-success"></i>Evolução Mensal
+                </h6>
+                <span class="badge bg-light text-dark fw-normal border">Últimos 6 Meses</span>
             </div>
             <div class="card-body">
-                <div style="height: 350px;">
+                <div style="height: 300px;">
                     <canvas id="evolucaoChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Distribuição por Linha -->
+    <!-- Distribuição por Status -->
     <div class="col-xl-4">
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 py-3">
-                <h6 class="mb-0 fw-bold text-dark">Distribuição por Linha</h6>
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-pie me-2 text-info"></i>Status das Vendas</h6>
             </div>
             <div class="card-body">
-                <div style="height: 350px;">
+                <div style="height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Distribuição por Linha -->
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-boxes me-2 text-primary"></i>Volume por Linha de
+                    Produto</h6>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
                     <canvas id="linhaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Funil de Conversão -->
+    <div class="col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-filter me-2 text-warning"></i>Funil de Conversão
+                </h6>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="funilChart"></canvas>
                 </div>
             </div>
         </div>
@@ -105,16 +131,26 @@
 </div>
 
 <style>
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);
+    }
+
     .bg-gradient-primary {
-        background: linear-gradient(135deg, #1b5e20 0%, #43a047 100%);
+        background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
     }
 
     .card {
-        transition: transform 0.2s;
+        transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+        border-radius: 12px;
     }
 
     .card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .ls-1 {
+        letter-spacing: 1px;
     }
 </style>
 {% endblock %}
@@ -124,11 +160,13 @@
 <script>
     // Configurações Globais do Chart.js
     Chart.defaults.font.family = "'Inter', sans-serif";
-    Chart.defaults.color = '#6c757d';
+    Chart.defaults.color = '#718096';
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    Chart.defaults.plugins.tooltip.padding = 12;
 
     // 1. Gráfico de Evolução (Linha)
     const ctxEvolucao = document.getElementById('evolucaoChart').getContext('2d');
-    const gradient = ctxEvolucao.createLinearGradient(0, 0, 0, 400);
+    const gradient = ctxEvolucao.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(46, 125, 50, 0.2)');
     gradient.addColorStop(1, 'rgba(46, 125, 50, 0)');
 
@@ -137,7 +175,7 @@
         data: {
             labels: [{% for label in metrics.graficos.evolucao['categories'] %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
-            label: 'Novas Vendas',
+            label: 'Vendas',
             data: [{% for val in metrics.graficos.evolucao['data_points'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
     borderColor: '#2e7d32',
         borderWidth: 3,
@@ -145,29 +183,40 @@
                 fill: true,
                     backgroundColor: gradient,
                         pointBackgroundColor: '#2e7d32',
-                            pointBorderColor: '#fff',
-                                pointHoverRadius: 6
+                            pointHoverRadius: 7
+            }]
+        },
+    options: {
+        maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { stepSize: 1 } },
+            x: { grid: { display: false } }
+        }
+    }
+    });
+
+    // 2. Gráfico de Status (Pie)
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'pie',
+        data: {
+            labels: [{% for label in metrics.graficos.status['categories'] %}"{{ label | upper }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for val in metrics.graficos.status['data_points'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: ['#2e7d32', '#f9a825', '#c62828', '#1565c0', '#4527a0'],
+        borderWidth: 0
             }]
         },
     options: {
         maintainAspectRatio: false,
             plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                    grid: { borderDash: [5, 5] },
-                ticks: { stepSize: 1 }
-            },
-            x: {
-                grid: { display: false }
-            }
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
         }
     }
     });
 
-    // 2. Gráfico de Linha de Produto (Doughnut)
+    // 3. Gráfico por Linha de Produto (Doughnut)
     const ctxLinha = document.getElementById('linhaChart').getContext('2d');
     new Chart(ctxLinha, {
         type: 'doughnut',
@@ -175,25 +224,38 @@
             labels: [{% for label in metrics.graficos.linha_produto['categories'] %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
             data: [{% for val in metrics.graficos.linha_produto['data_points'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
-    backgroundColor: [
-        '#1b5e20', '#2e7d32', '#388e3c', '#43a047',
-        '#4caf50', '#66bb6a', '#81c784'
-    ],
-        borderWidth: 2,
-            borderColor: '#fff'
+    backgroundColor: ['#1b5e20', '#2e7d32', '#388e3c', '#43a047', '#4caf50', '#66bb6a'],
+        cutout: '65%'
             }]
         },
     options: {
         maintainAspectRatio: false,
-            cutout: '70%',
-                plugins: {
-            legend: {
-                position: 'bottom',
-                    labels: {
-                    usePointStyle: true,
-                        padding: 20
-                }
-            }
+            plugins: {
+            legend: { position: 'right', labels: { usePointStyle: true, padding: 15 } }
+        }
+    }
+    });
+
+    // 4. Funil de Conversão (Bar)
+    const ctxFunil = document.getElementById('funilChart').getContext('2d');
+    new Chart(ctxFunil, {
+        type: 'bar',
+        data: {
+            labels: [{% for label in metrics.graficos.funil['categories'] %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for val in metrics.graficos.funil['data_points'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: ['#42a5f5', '#66bb6a', '#fb8c00'],
+        borderRadius: 8,
+            barPercentage: 0.6
+            }]
+        },
+    options: {
+        indexAxis: 'y',
+            maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+        scales: {
+            x: { beginAtZero: true, grid: { display: false } },
+            y: { grid: { display: false } }
         }
     }
     });

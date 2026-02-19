@@ -81,6 +81,22 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
     # 4. Total de Vendas (Geral)
     total_vendas = db.query(func.count(Venda.id)).filter(*filters).scalar() or 0
 
+    # 5. Distribuição por Status (Novo)
+    dist_status = db.query(
+        Venda.status,
+        func.count(Venda.id).label('total')
+    ).filter(*filters).group_by(Venda.status).all()
+    
+    labels_status = [str(r[0].value if hasattr(r[0], 'value') else r[0]) for r in dist_status]
+    values_status = [int(r[1]) for r in dist_status]
+
+    # 6. Funil de Conversão (Novo)
+    total_propostas = db.query(func.count(Proposta.id)).join(Venda).filter(*filters).scalar() or 0
+    total_pedidos = db.query(func.count(Pedido.id)).join(Venda).filter(*filters).scalar() or 0
+    
+    funil_labels = ["Propostas", "Pedidos", "Vendas"]
+    funil_values = [int(total_propostas), int(total_pedidos), int(total_vendas)]
+
     return {
         "resumo": {
             "vendas_andamento": int(vendas_andamento or 0),
@@ -93,6 +109,8 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
         },
         "graficos": {
             "linha_produto": {"categories": labels_linha, "data_points": values_linha},
-            "evolucao": {"categories": labels_evolucao, "data_points": values_evolucao}
+            "evolucao": {"categories": labels_evolucao, "data_points": values_evolucao},
+            "status": {"categories": labels_status, "data_points": values_status},
+            "funil": {"categories": funil_labels, "data_points": funil_values}
         }
     }

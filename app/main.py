@@ -1,4 +1,4 @@
-# SISCONT - Deploy V3 (Schema Repair) - 19/02/2026 13:58
+# SISCONT - Deploy V4 (Enhanced Dashboard) - 19/02/2026 14:03
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
