@@ -1,4 +1,4 @@
-# SISCONT - Deploy V9 (Aggressive Cache Fix) - 19/02/2026 14:25
+# SISCONT - Deploy V10 (Final OID Fix - Auto Nuke) - 19/02/2026 14:35
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -35,9 +35,22 @@ def run_enum_migration():
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             # 0. Limpar planos e caches da sessão ATUAL e definir timeouts
             conn.execute(text("DISCARD ALL;"))
-            conn.execute(text("SET lock_timeout = '5s';"))
-            conn.execute(text("SET statement_timeout = '30s';"))
+            conn.execute(text("SET lock_timeout = '30s';"))
+            conn.execute(text("SET statement_timeout = '60s';"))
             
+            # NOVO: Tentar encerrar outras conexões para liberar locks de DDL
+            try:
+                print("Tentando liberar locks (terminando outras conexões)...")
+                conn.execute(text("""
+                    SELECT pg_terminate_backend(pid) 
+                    FROM pg_stat_activity 
+                    WHERE datname = current_database() 
+                    AND pid <> pg_backend_pid()
+                    AND state <> 'idle';
+                """))
+            except Exception as e:
+                print(f"Aviso: Não foi possível terminar backends (continuando): {e}")
+
             # 1. Garantir que os TIPOS V4 existem
             for type_name, labels in enums_to_check.items():
                 try:
@@ -77,6 +90,7 @@ def run_enum_migration():
                     
                     if not res:
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {type_name} DEFAULT {default_val};"))
+                        print(f"Added column: {table}.{col}")
                     else:
                         # 1. Remover default (necessário para mudar o tipo)
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
@@ -119,9 +133,10 @@ def run_enum_migration():
 
             # Limpar caches para forçar recarga de metadados
             conn.execute(text("DISCARD ALL;"))
+            print("MIGRAÇÃO V10 CONCLUÍDA COM SUCESSO. ✅")
             
     except Exception:
-        print("Erro na migração V4 de enums:")
+        print("Erro na migração V10 de enums:")
         traceback.print_exc()
 
 @asynccontextmanager
@@ -139,7 +154,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         return RedirectResponse(url="/login")
     if exc.status_code == 403:
         return RedirectResponse(url="/dashboard")
-    # Para outros erros (404, 500, etc), mostrar o erro real
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
@@ -150,10 +164,8 @@ async def generic_exception_handler(request: Request, exc: Exception):
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
-# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Include Routers
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(diretorias.router)
