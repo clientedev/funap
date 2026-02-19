@@ -125,7 +125,6 @@ def run_enum_migration():
 async def lifespan(app: FastAPI):
     run_enum_migration()
     yield
-    yield
 
 
 app = FastAPI(title="SisCont", version="1.0.0", lifespan=lifespan)

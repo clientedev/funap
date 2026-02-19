@@ -53,42 +53,43 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
     # 2. Distribuição por Linha de Produto (Gráfico de Rosca)
     dist_linha = db.query(
         LinhaProduto.nome,
-        func.count(Venda.id)
+        func.count(Venda.id).label('total')
     ).join(Venda).filter(*filters).group_by(LinhaProduto.nome).all()
     
-    labels_linha = [r[0] for r in dist_linha]
-    values_linha = [r[1] for r in dist_linha]
+    labels_linha = [str(r[0]) for r in dist_linha]
+    values_linha = [int(r[1]) for r in dist_linha]
 
     # 3. Evolução de Vendas (Gráfico de Linha - Últimos 6 meses)
-    # Nota: Em SQLite/PostgreSQL a extração de data muda, mas vamos usar func.strftime/func.to_char
-    # Como o alvo é Railway (Postgres):
-    evolucao_query = db.query(
-        func.to_char(Venda.created_at, 'YYYY-MM').label('mes'),
-        func.count(Venda.id)
-    ).filter(*filters).group_by('mes').order_by('mes').limit(6).all()
-
-    # Caso seja SQLite para teste local:
-    if "sqlite" in str(db.get_bind().url):
+    # Detectar Dialeto
+    is_sqlite = "sqlite" in str(db.get_bind().url)
+    
+    if is_sqlite:
         evolucao_query = db.query(
             func.strftime('%Y-%m', Venda.created_at).label('mes'),
-            func.count(Venda.id)
+            func.count(Venda.id).label('total')
+        ).filter(*filters).group_by('mes').order_by('mes').limit(6).all()
+    else:
+        # Postgres
+        evolucao_query = db.query(
+            func.to_char(Venda.created_at, 'YYYY-MM').label('mes'),
+            func.count(Venda.id).label('total')
         ).filter(*filters).group_by('mes').order_by('mes').limit(6).all()
 
-    labels_evolucao = [r[0] for r in evolucao_query]
-    values_evolucao = [r[1] for r in evolucao_query]
+    labels_evolucao = [str(r[0]) for r in evolucao_query]
+    values_evolucao = [int(r[1]) for r in evolucao_query]
 
     # 4. Total de Vendas (Geral)
-    total_vendas = db.query(func.count(Venda.id)).filter(*filters).scalar()
+    total_vendas = db.query(func.count(Venda.id)).filter(*filters).scalar() or 0
 
     return {
         "resumo": {
-            "vendas_andamento": vendas_andamento,
-            "vendas_finalizadas": vendas_finalizadas,
-            "vendas_canceladas": vendas_canceladas,
-            "propostas_pendentes": propostas_pendentes,
-            "pedidos_pendentes": pedidos_pendentes,
-            "notas_parciais": notas_parciais,
-            "total_vendas": total_vendas
+            "vendas_andamento": int(vendas_andamento or 0),
+            "vendas_finalizadas": int(vendas_finalizadas or 0),
+            "vendas_canceladas": int(vendas_canceladas or 0),
+            "propostas_pendentes": int(propostas_pendentes or 0),
+            "pedidos_pendentes": int(pedidos_pendentes or 0),
+            "notas_parciais": int(notas_parciais or 0),
+            "total_vendas": int(total_vendas)
         },
         "graficos": {
             "linha_produto": {"labels": labels_linha, "values": values_linha},
