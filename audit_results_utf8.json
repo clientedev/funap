@@ -1,0 +1,93 @@
+﻿{
+    "oid_21978":  "NOT FOUND",
+    "vendas_columns":  [
+                           {
+                               "column":  "id",
+                               "type":  "int4",
+                               "oid":  23
+                           },
+                           {
+                               "column":  "numero",
+                               "type":  "varchar",
+                               "oid":  1043
+                           },
+                           {
+                               "column":  "processo_sei",
+                               "type":  "varchar",
+                               "oid":  1043
+                           },
+                           {
+                               "column":  "objeto",
+                               "type":  "text",
+                               "oid":  25
+                           },
+                           {
+                               "column":  "valor_total",
+                               "type":  "numeric",
+                               "oid":  1700
+                           },
+                           {
+                               "column":  "cliente_id",
+                               "type":  "int4",
+                               "oid":  23
+                           },
+                           {
+                               "column":  "diretoria_id",
+                               "type":  "int4",
+                               "oid":  23
+                           },
+                           {
+                               "column":  "linha_produto_id",
+                               "type":  "int4",
+                               "oid":  23
+                           },
+                           {
+                               "column":  "criado_por_id",
+                               "type":  "int4",
+                               "oid":  23
+                           },
+                           {
+                               "column":  "created_at",
+                               "type":  "timestamptz",
+                               "oid":  1184
+                           },
+                           {
+                               "column":  "updated_at",
+                               "type":  "timestamptz",
+                               "oid":  1184
+                           },
+                           {
+                               "column":  "status_v19",
+                               "type":  "varchar",
+                               "oid":  1043
+                           },
+                           {
+                               "column":  "modalidade_v19",
+                               "type":  "varchar",
+                               "oid":  1043
+                           }
+                       ],
+    "dependencies_count":  2,
+    "constraints":  [
+                        {
+                            "name":  "vendas_pkey",
+                            "type":  "p"
+                        },
+                        {
+                            "name":  "vendas_cliente_id_fkey",
+                            "type":  "f"
+                        },
+                        {
+                            "name":  "vendas_diretoria_id_fkey",
+                            "type":  "f"
+                        },
+                        {
+                            "name":  "vendas_linha_produto_id_fkey",
+                            "type":  "f"
+                        },
+                        {
+                            "name":  "vendas_criado_por_id_fkey",
+                            "type":  "f"
+                        }
+                    ]
+}

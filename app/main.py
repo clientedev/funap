@@ -1,4 +1,6 @@
-# SISCONT - Deploy V28 (DEEP OID AUDIT) - 19/02/2026 16:10
+# SISCONT - Deploy V29 (FORENSIC AUDIT) - 19/02/2026 16:30
+import os
+import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -35,7 +37,6 @@ async def seed_database():
         seed_data()
         return {"status": "Database Seeded"}
     except Exception as e:
-        import traceback
         return {"error": str(e), "trace": traceback.format_exc()}
 
 @app.get("/debug-db-schema")
@@ -44,31 +45,48 @@ async def debug_db_schema():
     from app.database import engine
     try:
         with engine.connect() as conn:
-            # 1. Check for the ghost OID directly
-            oid_check = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
+            # Ghost OID
+            GHOST_OID = 21978
             
-            # 2. Check ALL columns in Vendas and their underlying types
-            vendas_types = conn.execute(text("""
-                SELECT a.attname, t.typname, t.oid
-                FROM pg_attribute a
-                JOIN pg_type t ON a.atttypid = t.oid
-                WHERE a.attrelid = 'vendas'::regclass AND a.attnum > 0;
+            # 1. Dependências detalhadas
+            deps = conn.execute(text(f"""
+                SELECT 
+                    classid::regclass as class, 
+                    objid as object_id, 
+                    objsubid as sub_id,
+                    refclassid::regclass as ref_class,
+                    refobjid as ref_object_id,
+                    refobjsubid as ref_sub_id,
+                    deptype
+                FROM pg_depend 
+                WHERE refobjid = {GHOST_OID} OR objid = {GHOST_OID};
             """)).fetchall()
             
-            # 3. Check for any dependency on OID 21978
-            deps = conn.execute(text("""
-                SELECT * FROM pg_depend WHERE refobjid = 21978 OR objid = 21978;
+            # 2. Defaults de colunas (pg_attrdef)
+            defaults = conn.execute(text(f"""
+                SELECT 
+                    adrelid::regclass as table_name,
+                    adnum as column_num,
+                    pg_get_expr(adbin, adrelid) as expression
+                FROM pg_attrdef
+                WHERE adbin::text LIKE '%{GHOST_OID}%';
             """)).fetchall()
             
-            # 4. Check for indices or constraints
-            constraints = conn.execute(text("""
-                SELECT conname, contype FROM pg_constraint WHERE conrelid = 'vendas'::regclass;
+            # 3. Triggers
+            triggers = conn.execute(text(f"""
+                SELECT tgname, tgrelid::regclass as table_name
+                FROM pg_trigger
+                WHERE tgfoid IN (SELECT oid FROM pg_proc WHERE prosrc LIKE '%{GHOST_OID}%');
             """)).fetchall()
 
+            # 4. Tipos remanescentes
+            ghost_types = conn.execute(text(f"SELECT oid, typname FROM pg_type WHERE typname LIKE '%v4%' OR typname LIKE '%v5%';")).fetchall()
+
             return {
-                "oid_21978": oid_check[0] if oid_check else "NOT FOUND",
-                "vendas_columns": [{"column": r[0], "type": r[1], "oid": r[2]} for r in vendas_types],
-                "dependencies_count": len(deps),
-                "constraints": [{"name": c[0], "type": c[1]} for c in constraints]
+                "ghost_oid": GHOST_OID,
+                "pg_depend": [{"class": d[0], "obj_id": d[1], "sub_id": d[2], "ref_class": d[3], "ref_obj_id": d[4], "deptype": d[6]} for d in deps],
+                "pg_attrdef": [{"table": d[0], "col": d[1], "expr": d[2]} for d in defaults],
+                "triggers": [{"name": t[0], "table": t[1]} for t in triggers],
+                "ghost_types": [{"oid": t[0], "name": t[1]} for t in ghost_types]
             }
     except Exception as e: return {"error": str(e)}
