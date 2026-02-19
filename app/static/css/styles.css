@@ -19,64 +19,76 @@ body {
     overflow-x: hidden;
 }
 
-/* Sidebar Styling */
+/* Layout & Sidebar Wrapper */
+#wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    transition: all var(--transition-speed);
+}
+
 #sidebar-wrapper {
     min-height: 100vh;
     width: var(--sidebar-width);
     background: var(--secondary-color);
     color: white;
     transition: all var(--transition-speed);
+    flex-shrink: 0;
+    z-index: 1050;
 }
 
-.sidebar-heading {
-    padding: 0.25rem 0.75rem;
-    background: #ffffff;
-    border-bottom: 2px solid var(--accent-color);
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+#sidebar-wrapper .list-group {
+    width: var(--sidebar-width);
 }
 
-.sidebar-heading img {
-    max-width: 100%;
-    height: auto;
-    max-height: 85px;
-    object-fit: contain;
-}
-
-.list-group-item {
-    background: transparent !important;
-    color: rgba(255, 255, 255, 0.8) !important;
-    border: none !important;
-    padding: 12px 20px !important;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.list-group-item:hover,
-.list-group-item.active {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
-    border-left: 4px solid var(--accent-color) !important;
-}
-
-.list-group-item i {
-    width: 20px;
-}
-
-/* Main Content area */
 #page-content-wrapper {
     width: 100%;
     transition: all var(--transition-speed);
+    min-width: 0;
+    /* Important for flex child overflow */
+}
+
+/* Sidebar Toggle Logic (Desktop) */
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: calc(-1 * var(--sidebar-width));
+}
+
+/* Sidebar Toggle Logic (Mobile) */
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: calc(-1 * var(--sidebar-width));
+        position: fixed;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: 0;
+    }
+
+    #page-content-wrapper {
+        min-width: 100vw;
+    }
+
+    /* Overlay Backdrop on Mobile */
+    #sidebar-overlay {
+        display: none;
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1045;
+        top: 0;
+        left: 0;
+    }
+
+    #wrapper.toggled #sidebar-overlay {
+        display: block;
+    }
 }
 
 .navbar {
     background: white !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 1040;
 }
 
 /* Cards & Components */

@@ -5,18 +5,16 @@
 {% block page_title %}Detalhes da Venda <span class="text-muted">#{{ venda.numero or venda.id }}</span>{% endblock %}
 
 {% block actions %}
-<div class="d-flex gap-2">
-    <a href="/vendas" class="btn btn-light"><i class="fas fa-arrow-left me-2"></i> Voltar</a>
+<div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+    <a href="/vendas" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i> <span
+            class="d-none d-sm-inline">Voltar</span></a>
     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarVenda">
-        <i class="fas fa-edit me-2"></i> Editar
+        <i class="fas fa-edit me-1"></i> <span class="d-none d-sm-inline">Editar</span>
     </button>
     <a href="/vendas/{{ venda.id }}/excluir" class="btn btn-outline-danger"
-        onclick="return confirm('ATENÇÃO: Isso excluirá a venda e todos os seus vínculos (propostas, empenhos, etc). Confirmar?')">
-        <i class="fas fa-trash me-2"></i> Excluir
+        onclick="return confirm('ATENÇÃO: Isso excluirá a venda e todos os seus vínculos. Confirmar?')">
+        <i class="fas fa-trash me-1"></i> <span class="d-none d-sm-inline">Excluir</span>
     </a>
-    {% if venda.status == 'ABERTA' %}
-    <button class="btn btn-success"><i class="fas fa-check-circle me-2"></i> Finalizar Venda</button>
-    {% endif %}
 </div>
 {% endblock %}
 
@@ -60,33 +58,36 @@
             </div>
         </div>
 
-        <!-- Seção de Fluxo (Tabs) -->
-        <ul class="nav nav-pills mb-3 gap-2" id="vendaFlow" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active border" id="custo-tab" data-bs-toggle="pill" data-bs-target="#custo"
-                    type="button">DIPRO</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="proposta-tab" data-bs-toggle="pill" data-bs-target="#proposta"
-                    type="button">Proposta</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="contrato-tab" data-bs-toggle="pill" data-bs-target="#contrato"
-                    type="button">Contrato</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="empenho-tab" data-bs-toggle="pill" data-bs-target="#empenho"
-                    type="button">Empenho</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="pedido-tab" data-bs-toggle="pill" data-bs-target="#pedido"
-                    type="button">Pedido</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="nf-tab" data-bs-toggle="pill" data-bs-target="#nf"
-                    type="button">Nota Fiscal</button>
-            </li>
-        </ul>
+        <!-- Seção de Fluxo (Tabs) con Scroll Horizontal Responsive -->
+        <div class="nav-container mb-3 overflow-hidden" style="position: relative;">
+            <ul class="nav nav-pills flex-nowrap overflow-auto pb-2 gap-2" id="vendaFlow" role="tablist"
+                style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active border text-nowrap" id="custo-tab" data-bs-toggle="pill"
+                        data-bs-target="#custo" type="button">DIPRO</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link border text-nowrap" id="proposta-tab" data-bs-toggle="pill"
+                        data-bs-target="#proposta" type="button">Proposta</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link border text-nowrap" id="contrato-tab" data-bs-toggle="pill"
+                        data-bs-target="#contrato" type="button">Contrato</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link border text-nowrap" id="empenho-tab" data-bs-toggle="pill"
+                        data-bs-target="#empenho" type="button">Empenho</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link border text-nowrap" id="pedido-tab" data-bs-toggle="pill"
+                        data-bs-target="#pedido" type="button">Pedido</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link border text-nowrap" id="nf-tab" data-bs-toggle="pill" data-bs-target="#nf"
+                        type="button">Nota Fiscal</button>
+                </li>
+            </ul>
+        </div>
 
         <div class="tab-content" id="vendaFlowContent">
             <!-- Solicitação de Custo -->
