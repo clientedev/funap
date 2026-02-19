@@ -1,92 +1,96 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - SISCONT{% endblock %}
-
-{% block page_title %}Dashboard de Vendas{% endblock %}
-
-{% block content %}
-<!-- Cards de Métricas -->
-<div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card metric-card h-100">
+<!-- Cards de Resumo -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 bg-gradient-primary text-white">
             <div class="card-body">
-                <div class="metric-icon bg-light-primary text-primary">
-                    <i class="fas fa-shopping-cart"></i>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                        <i class="fas fa-shopping-cart fa-lg"></i>
+                    </div>
+                    <span class="badge bg-white bg-opacity-25">Total: {{ metrics.resumo.total_vendas }}</span>
                 </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Vendas em Andamento</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.vendas_andamento }}</h2>
+                <h6 class="text-white-50 small text-uppercase fw-bold">Vendas Ativas</h6>
+                <h2 class="fw-bold mb-0">{{ metrics.resumo.vendas_andamento }}</h2>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="card metric-card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="metric-icon bg-light-success text-success">
-                    <i class="fas fa-check-double"></i>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success">
+                        <i class="fas fa-check-double fa-lg"></i>
+                    </div>
+                    <div class="text-success small"><i class="fas fa-arrow-up me-1"></i>Concluídas</div>
                 </div>
                 <h6 class="text-muted small text-uppercase fw-bold">Finalizadas</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.vendas_finalizadas }}</h2>
+                <h2 class="fw-bold mb-0">{{ metrics.resumo.vendas_finalizadas }}</h2>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="card metric-card">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="metric-icon bg-light-warning text-warning">
-                    <i class="fas fa-file-invoice-dollar"></i>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning">
+                        <i class="fas fa-file-invoice-dollar fa-lg"></i>
+                    </div>
+                    <div class="text-warning small">Pendente</div>
                 </div>
                 <h6 class="text-muted small text-uppercase fw-bold">Propostas Pen.</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.propostas_pendentes }}</h2>
+                <h2 class="fw-bold mb-0">{{ metrics.resumo.propostas_pendentes }}</h2>
             </div>
         </div>
     </div>
-    <div class="col-xl-2 col-md-4 mb-4">
-        <div class="card metric-card h-100">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="metric-icon bg-light-danger text-danger">
-                    <i class="fas fa-shipping-fast"></i>
-                </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Pedidos Pen.</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.pedidos_pendentes }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-2 col-md-4 mb-4">
-        <div class="card metric-card h-100">
-            <div class="card-body">
-                <div class="metric-icon bg-light-info text-info">
-                    <i class="fas fa-box-open"></i>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 text-info">
+                        <i class="fas fa-box-open fa-lg"></i>
+                    </div>
+                    <div class="text-info small">Em Aberto</div>
                 </div>
                 <h6 class="text-muted small text-uppercase fw-bold">Notas Parciais</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.notas_parciais }}</h2>
+                <h2 class="fw-bold mb-0">{{ metrics.resumo.notas_parciais }}</h2>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <!-- Gráfico Principal -->
+<div class="row g-4">
+    <!-- Gráfico de Evolução -->
     <div class="col-xl-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Volume de Vendas (Fluxo)</span>
-                <i class="fas fa-chart-line text-muted"></i>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-dark">Evolução de Vendas (Mensal)</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li><a class="dropdown-item" href="#">Exportar PDF</a></li>
+                        <li><a class="dropdown-item" href="#">Ver Dados</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="card-body">
-                <div style="height: 300px;">
-                    <canvas id="vendasChart"></canvas>
+                <div style="height: 350px;">
+                    <canvas id="evolucaoChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Distribuição por Status -->
+    <!-- Distribuição por Linha -->
     <div class="col-xl-4">
-        <div class="card">
-            <div class="card-header">Distribuição de Status</div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold text-dark">Distribuição por Linha</h6>
+            </div>
             <div class="card-body">
-                <div style="height: 300px;">
-                    <canvas id="statusChart"></canvas>
+                <div style="height: 350px;">
+                    <canvas id="linhaChart"></canvas>
                 </div>
             </div>
         </div>
@@ -94,24 +98,16 @@
 </div>
 
 <style>
-    .bg-light-primary {
-        background-color: rgba(46, 125, 50, 0.1);
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1b5e20 0%, #43a047 100%);
     }
 
-    .bg-light-success {
-        background-color: rgba(139, 195, 74, 0.1);
+    .card {
+        transition: transform 0.2s;
     }
 
-    .bg-light-warning {
-        background-color: rgba(255, 193, 7, 0.1);
-    }
-
-    .bg-light-danger {
-        background-color: rgba(244, 67, 54, 0.1);
-    }
-
-    .bg-light-info {
-        background-color: rgba(0, 188, 212, 0.1);
+    .card:hover {
+        transform: translateY(-5px);
     }
 </style>
 {% endblock %}
@@ -119,48 +115,80 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Gráfico de Pizza (Status)
-    const ctxStatus = document.getElementById('statusChart').getContext('2d');
-    new Chart(ctxStatus, {
+    // Configurações Globais do Chart.js
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#6c757d';
+
+    // 1. Gráfico de Evolução (Linha)
+    const ctxEvolucao = document.getElementById('evolucaoChart').getContext('2d');
+    const gradient = ctxEvolucao.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(46, 125, 50, 0.2)');
+    gradient.addColorStop(1, 'rgba(46, 125, 50, 0)');
+
+    new Chart(ctxEvolucao, {
+        type: 'line',
+        data: {
+            labels: {{ metrics.graficos.evolucao.labels | tojson }},
+        datasets: [{
+            label: 'Novas Vendas',
+            data: {{ metrics.graficos.evolucao.values | tojson }},
+        borderColor: '#2e7d32',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: gradient,
+        pointBackgroundColor: '#2e7d32',
+        pointBorderColor: '#fff',
+        pointHoverRadius: 6
+            }]
+        },
+        options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { borderDash: [5, 5] },
+                ticks: { stepSize: 1 }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+    });
+
+    // 2. Gráfico de Linha de Produto (Doughnut)
+    const ctxLinha = document.getElementById('linhaChart').getContext('2d');
+    new Chart(ctxLinha, {
         type: 'doughnut',
         data: {
-            labels: ['Em Andamento', 'Finalizadas'],
-            datasets: [{
-                data: [{{ metrics.vendas_andamento }}, {{ metrics.vendas_finalizadas }}],
-        backgroundColor: ['#2e7d32', '#8bc34a'],
-        borderWidth: 0
-    }]
+            labels: {{ metrics.graficos.linha_produto.labels | tojson }},
+        datasets: [{
+            data: {{ metrics.graficos.linha_produto.values | tojson }},
+        backgroundColor: [
+            '#1b5e20', '#2e7d32', '#388e3c', '#43a047',
+            '#4caf50', '#66bb6a', '#81c784'
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+            }]
         },
         options: {
         maintainAspectRatio: false,
         cutout: '70%',
         plugins: {
-            legend: { position: 'bottom' }
-        }
-    }
-    });
-
-    // Gráfico de Linha (Simulado)
-    const ctxVendas = document.getElementById('vendasChart').getContext('2d');
-    new Chart(ctxVendas, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-            datasets: [{
-                label: 'Vendas',
-                data: [12, 19, 3, 5, 2, 3],
-                borderColor: '#2e7d32',
-                tension: 0.4,
-                fill: true,
-                backgroundColor: 'rgba(46, 125, 50, 0.05)'
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20
+                }
             }
         }
+    }
     });
 </script>
 {% endblock %}

@@ -33,21 +33,25 @@
             <div class="col-md-2">
                 <select name="modalidade" class="form-select">
                     <option value="">Modalidade</option>
-                    <option value="VENDA" {% if request.query_params.get('modalidade')=='VENDA' %}selected{% endif %}>
+                    <option value="venda" {% if request.query_params.get('modalidade')=='venda' %}selected{% endif %}>
                         Venda</option>
-                    <option value="LICITACAO" {% if request.query_params.get('modalidade')=='LICITACAO' %}selected{%
+                    <option value="licitacao" {% if request.query_params.get('modalidade')=='licitacao' %}selected{%
                         endif %}>Licitação</option>
-                    <option value="PRODUCAO" {% if request.query_params.get('modalidade')=='PRODUCAO' %}selected{% endif
+                    <option value="producao" {% if request.query_params.get('modalidade')=='producao' %}selected{% endif
                         %}>Produção</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select">
                     <option value="">Status Venda</option>
-                    <option value="ABERTA" {% if request.query_params.get('status')=='ABERTA' %}selected{% endif %}>
-                        Aberta</option>
-                    <option value="FINALIZADA" {% if request.query_params.get('status')=='FINALIZADA' %}selected{% endif
+                    <option value="em_andamento" {% if request.query_params.get('status')=='em_andamento' %}selected{%
+                        endif %}>
+                        Em Andamento</option>
+                    <option value="finalizada" {% if request.query_params.get('status')=='finalizada' %}selected{% endif
                         %}>Finalizada</option>
+                    <option value="cancelada" {% if request.query_params.get('status')=='cancelada' %}selected{% endif
+                        %}>
+                        Cancelada</option>
                 </select>
             </div>
             <div class="col-md-1">
@@ -85,10 +89,14 @@
                         <td><span class="badge bg-light text-dark border">{{ venda.linha_produto.nome if
                                 venda.linha_produto else 'Diversos' }}</span></td>
                         <td>
-                            {% if venda.status == 'ABERTA' %}
-                            <span class="badge bg-primary">ABERTA</span>
-                            {% else %}
+                            {% if venda.status == 'em_andamento' %}
+                            <span class="badge bg-primary">EM ANDAMENTO</span>
+                            {% elif venda.status == 'finalizada' %}
                             <span class="badge bg-success">FINALIZADA</span>
+                            {% elif venda.status == 'cancelada' %}
+                            <span class="badge bg-danger">CANCELADA</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ venda.status|upper }}</span>
                             {% endif %}
                         </td>
                         <td class="text-end pe-4">

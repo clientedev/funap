@@ -27,22 +27,17 @@
     <div class="col-md-4 mb-4">
         <div class="card h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <h5 class="card-title fw-bold text-success">{{ linha.nome }}</h5>
-                    <div class="dropdown">
-                        <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                            <li><a class="dropdown-item" href="/linhas-produto/{{ linha.id }}/editar"><i
-                                        class="fas fa-edit me-2"></i> Editar</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="/linhas-produto/{{ linha.id }}/excluir"
-                                    onclick="return confirm('Excluir esta linha?')"><i class="fas fa-trash me-2"></i>
-                                    Excluir</a></li>
-                        </ul>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold text-success mb-0">{{ linha.nome }}</h5>
+                    <div class="d-flex gap-1">
+                        <a href="/linhas-produto/{{ linha.id }}/editar" class="btn btn-sm btn-light text-primary"
+                            title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="/linhas-produto/{{ linha.id }}/excluir" class="btn btn-sm btn-light text-danger"
+                            title="Excluir" onclick="return confirm('Excluir esta linha?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
                     </div>
                 </div>
                 <p class="card-text text-muted small mt-2">
