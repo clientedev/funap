@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes, linhas_produto
 
 app = FastAPI(title="SisCont", version="1.0.0")
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):

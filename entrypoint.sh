@@ -8,8 +8,9 @@ echo "Aguardando banco de dados..."
 echo "Aplicando migrations..."
 alembic upgrade head
 
-# Criar dados iniciais (opcional, pode ser script separado)
-# python initial_data.py
+# Criar tabelas automaticamente
+echo "Criando tabelas..."
+python -m app.create_tables
 
 # Iniciar aplicação usando gunicorn para produção
 echo "Iniciando servidor na porta ${PORT:-8000}..."
