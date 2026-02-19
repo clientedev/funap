@@ -92,7 +92,7 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
             "total_vendas": int(total_vendas)
         },
         "graficos": {
-            "linha_produto": {"labels": labels_linha, "values": values_linha},
-            "evolucao": {"labels": labels_evolucao, "values": values_evolucao}
+            "linha_produto": {"categories": labels_linha, "data_points": values_linha},
+            "evolucao": {"categories": labels_evolucao, "data_points": values_evolucao}
         }
     }
