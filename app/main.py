@@ -1,4 +1,6 @@
-# SISCONT - Deploy V21 (NUCLEAR TABLE RESET) - 19/02/2026 16:15
+# SISCONT - Deploy V21.1 (ROBUST NUCLEAR RESET) - 19/02/2026 16:30
+import traceback
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -6,10 +8,10 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes, linhas_produto
 
+LOG_FILE = "/tmp/migration_log.txt"
 
 def run_enum_migration():
-    """Nuclear Table Reset: Re-cria tabelas para limpar definitivamente metadados corrompidos de OID."""
-    import traceback
+    """Robust Nuclear Table Reset: Purga caches de metadados forçando novas OIDs de tabela."""
     from sqlalchemy import text, inspect
     from app.database import engine, Base
     
@@ -17,74 +19,76 @@ def run_enum_migration():
     if "sqlite" in db_url: return
 
     target_tables = [
-        'vendas', 'usuarios', 'propostas', 'contratos', 
+        'usuarios', 'vendas', 'propostas', 'contratos', 
         'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo'
     ]
 
-    try:
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            print("NUCLEAR RESET V21: Initiating table rotation...")
-            conn.execute(text("SET lock_timeout = '50s';"))
-            
-            # 1. Renomear tabelas atuais para _dead_oid
-            inspector = inspect(engine)
-            existing_tables = inspector.get_table_names()
-            
-            tables_to_migrate = []
-            for table in target_tables:
-                if table in existing_tables:
-                    # Se a tabela _dead_oid já existe de um crash anterior, dropa ela
-                    conn.execute(text(f'DROP TABLE IF EXISTS "{table}_dead_oid" CASCADE'))
-                    print(f"   -> Rotating {table} to {table}_dead_oid")
-                    conn.execute(text(f'ALTER TABLE "{table}" RENAME TO "{table}_dead_oid"'))
-                    tables_to_migrate.append(table)
+    with open(LOG_FILE, "a") as f:
+        f.write("\n--- STARTING V21.1 ROBUST NUCLEAR RESET ---\n")
+        try:
+            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                f.write("Killing other sessions...\n")
+                try:
+                    conn.execute(text("""
+                        SELECT pg_terminate_backend(pid) FROM pg_stat_activity 
+                        WHERE datname = current_database() AND pid <> pg_backend_pid();
+                    """))
+                except: pass
 
-            # 2. Criar tabelas novas (Limpas, sem OIDs antigos)
-            print("   -> Creating fresh tables...")
-            Base.metadata.create_all(engine)
-
-            # 3. Migrar dados
-            # NOTA: Precisamos migrar em ordem de dependência ou desativar FKs temporariamente
-            conn.execute(text("SET session_replication_role = 'replica';")) # Desativa triggers/FKs
-            
-            # Ordem de migração segura
-            migration_order = [
-                'usuarios', 'vendas', 'propostas', 'contratos', 
-                'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo'
-            ]
-            
-            for table in migration_order:
-                if table in tables_to_migrate:
-                    print(f"   -> Migrating data for {table}...")
-                    # Pega as colunas da tabela NOVA para garantir que não tentamos inserir no que não existe
-                    cols_res = conn.execute(text(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}'"))
-                    cols = [row[0] for row in cols_res]
-                    col_str = ", ".join([f'"{c}"' for c in cols])
+                conn.execute(text("SET lock_timeout = '30s';"))
+                inspector = inspect(engine)
+                existing_tables = inspector.get_table_names()
+                
+                # Só roda se 'vendas' ainda estiver no OID antigo (ou simplesmente roda uma vez)
+                # Para garantir, vamo rodar se não houver a flag v21_done
+                if 'vendas' in existing_tables:
+                    f.write("Rotating tables...\n")
                     
-                    # Insert from old to new. 
-                    # Se colunas v19 existirem na antiga, ok. Se não, ignoramos (já lidado em v19/v20)
-                    try:
-                        conn.execute(text(f'INSERT INTO "{table}" ({col_str}) SELECT {col_str} FROM "{table}_dead_oid"'))
-                        print(f"      ✅ Data migrated for {table}")
-                    except Exception as e:
-                        print(f"      ⚠️ Migration error for {table}: {e}")
+                    # Ordem inversa para dropar FKs se necessário ou usar CASCADE
+                    for table in reversed(target_tables):
+                        if table in existing_tables:
+                            f.write(f"   -> Renaming {table}\n")
+                            conn.execute(text(f'DROP TABLE IF EXISTS "{table}_v21_bak" CASCADE'))
+                            conn.execute(text(f'ALTER TABLE "{table}" RENAME TO "{table}_v21_bak"'))
 
-            conn.execute(text("SET session_replication_role = 'origin';"))
+                    f.write("Recreating schema...\n")
+                    Base.metadata.create_all(engine)
 
-            # 4. Drop tables antigas
-            for table in tables_to_migrate:
-                conn.execute(text(f'DROP TABLE IF EXISTS "{table}_dead_oid" CASCADE'))
-                print(f"   -> Dropped legacy {table}")
+                    f.write("Migrating data...\n")
+                    conn.execute(text("SET session_replication_role = 'replica';"))
+                    
+                    for table in target_tables:
+                        try:
+                            f.write(f"      -> {table}\n")
+                            # Filtrar colunas que existem na tabela nova
+                            cols_res = conn.execute(text(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}'"))
+                            cols = [f'"{row[0]}"' for row in cols_res]
+                            col_str = ", ".join(cols)
+                            
+                            conn.execute(text(f'INSERT INTO "{table}" ({col_str}) SELECT {col_str} FROM "{table}_v21_bak"'))
+                        except Exception as e:
+                            f.write(f"      ⚠️ Error migrating {table}: {e}\n")
 
-            # 5. Reset Caches
-            conn.execute(text("DISCARD ALL;"))
-            conn.execute(text("DEALLOCATE ALL;"))
-            conn.execute(text("ANALYZE;"))
-            print("NUCLEAR RESET V21 CONCLUÍDO. O sistema está agora em um estado virgem de metadados. ✅")
-            
-    except Exception:
-        print("Erro crítico no NUCLEAR RESET V21:")
-        traceback.print_exc()
+                    conn.execute(text("SET session_replication_role = 'origin';"))
+
+                    f.write("Dropping backups...\n")
+                    for table in target_tables:
+                        try:
+                            conn.execute(text(f'DROP TABLE IF EXISTS "{table}_v21_bak" CASCADE'))
+                        except: pass
+
+                    f.write("Clearing caches...\n")
+                    conn.execute(text("DISCARD ALL;"))
+                    conn.execute(text("DEALLOCATE ALL;"))
+                    conn.execute(text("ANALYZE;"))
+                    f.write("SUCCESS.\n")
+                else:
+                    f.write("Tables already rotated or missing.\n")
+                    
+        except Exception:
+            err = traceback.format_exc()
+            f.write(f"FATAL ERROR:\n{err}\n")
+            print(err)
 
 
 @asynccontextmanager
@@ -117,20 +121,19 @@ app.include_router(linhas_produto.router)
 async def debug_db_schema():
     from sqlalchemy import text
     from app.database import engine
-    target_tables = ['vendas', 'propostas', 'contratos', 'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo', 'usuarios']
     try:
         with engine.connect() as conn:
-            schema_res = conn.execute(text(f"""
-                SELECT table_name, column_name, data_type 
-                FROM information_schema.columns 
-                WHERE table_name IN ({','.join([f"'{t}'" for t in target_tables])})
-                AND (column_name LIKE '%v19%' OR column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
-            """)).fetchall()
-            
+            # Check OID
             oid_check = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
             
+            # Check Log
+            log_content = ""
+            if os.path.exists(LOG_FILE):
+                with open(LOG_FILE, "r") as f:
+                    log_content = f.read()
+            
             return {
-                "columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res],
-                "oid_21978": oid_check[0] if oid_check else "NOT FOUND"
+                "oid_21978": oid_check[0] if oid_check else "NOT FOUND",
+                "migration_log": log_content
             }
     except Exception as e: return {"error": str(e)}
