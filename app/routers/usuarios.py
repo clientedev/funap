@@ -68,7 +68,7 @@ async def create_user(
         "nome": nome,
         "email": email,
         "senha_hash": security.get_password_hash(password),
-        "perfil": perfil,
+        "perfil": perfil.lower(),
         "diretoria_id": diretoria_id,
         "ativo": True
     })
@@ -119,7 +119,7 @@ async def update_user(
     repo.update(db, db_obj=usuario, obj_in={
         "nome": nome,
         "email": email,
-        "perfil": perfil,
+        "perfil": perfil.lower(),
         "diretoria_id": diretoria_id,
         "ativo": True if ativo == "on" else False
     })

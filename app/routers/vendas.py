@@ -88,7 +88,7 @@ async def create_venda(
         diretoria_id=current_user.diretoria_id or 1,
         criado_por_id=current_user.id,
         objeto=objeto,
-        modalidade=modalidade,
+        modalidade=modalidade.lower(),
         processo_sei=processo_sei,
         numero=numero or f"V-{datetime.now().strftime('%Y%m%d%H%M%S')}",
         status="em_andamento"

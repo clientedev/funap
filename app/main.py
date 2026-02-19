@@ -1,4 +1,4 @@
-# SISCONT - Deploy V19 (ABYSSAL ABANDONMENT) - 19/02/2026 15:30
+# SISCONT - Deploy V20 (CLEANUP & CASING) - 19/02/2026 16:05
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,7 +8,7 @@ from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes,
 
 
 def run_enum_migration():
-    """Migra dados para colunas novas (v19) para abandonar as corrompidas."""
+    """Remove colunas legadas corrompidas e garante a saúde do schema v19."""
     import traceback
     from sqlalchemy import text
     from app.database import engine
@@ -31,42 +31,45 @@ def run_enum_migration():
                 """))
             except: pass
 
-            # Lista de migração: (Tabela, ColunaAntiga, ColunaNova)
-            migration_plan = [
-                ("vendas", "status", "status_v19"),
-                ("vendas", "modalidade", "modalidade_v19"),
-                ("propostas", "status", "status_v19"),
-                ("contratos", "status", "status_v19"),
-                ("empenhos", "status", "status_v19"),
-                ("pedidos", "status", "status_v19"),
-                ("notas_fiscais", "status_entrega", "status_entrega_v19"),
-                ("solicitacoes_custo", "status", "status_v19"),
-                ("usuarios", "perfil", "perfil_v19")
+            # Lista de colunas legadas para DROPAR (Dados já migrados para _v19)
+            legacy_cols = [
+                ("vendas", "status"),
+                ("vendas", "modalidade"),
+                ("propostas", "status"),
+                ("contratos", "status"),
+                ("empenhos", "status"),
+                ("pedidos", "status"),
+                ("notas_fiscais", "status_entrega"),
+                ("solicitacoes_custo", "status"),
+                ("usuarios", "perfil")
             ]
 
-            print("ABYSSAL ABANDONMENT: Creating new columns and migrating data...")
-            for table, old_col, new_col in migration_plan:
+            print("CLEANUP V20: Dropping legacy columns to restore creation flow...")
+            for table, col in legacy_cols:
                 try:
-                    # 1. Garantir que a coluna NOVA existe (VARCHAR 100)
-                    res = conn.execute(text(f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{new_col}'")).fetchone()
-                    if not res:
-                        print(f"   -> Creating {table}.{new_col}")
-                        conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "{new_col}" VARCHAR(100)'))
-                    
-                    # 2. Migrar dados da antiga para a nova (se a antiga existir)
-                    old_exists = conn.execute(text(f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{old_col}'")).fetchone()
-                    if old_exists:
-                        print(f"   -> Migrating {table}.{old_col} to {new_col}")
-                        conn.execute(text(f'UPDATE "{table}" SET "{new_col}" = "{old_col}"::TEXT WHERE "{new_col}" IS NULL'))
-                    
-                    print(f"      ✅ Migrated {table}.{new_col}")
+                    # Tentar dropar a coluna legado. Se falhar (já dropada), ignore.
+                    print(f"   -> Dropping {table}.{col} (legacy)")
+                    conn.execute(text(f'ALTER TABLE "{table}" DROP COLUMN IF EXISTS "{col}" CASCADE'))
+                    print(f"      ✅ Deleted {table}.{col}")
                 except Exception as e:
-                    print(f"      ⚠️ Skip/Error in {table}.{new_col}: {e}")
+                    print(f"      ⚠️ Info: {table}.{col} could not be dropped or already gone: {e}")
 
-            print("MIGRAÇÃO V19 (ABANDONMENT) CONCLUÍDA. ✅")
+            # Cleanup native types leftover
+            print("CLEANUP: Dropping enum types...")
+            try:
+                res = conn.execute(text("SELECT typname FROM pg_type WHERE typname LIKE '%enum%'"))
+                for row in res:
+                    try:
+                        conn.execute(text(f'DROP TYPE IF EXISTS "{row[0]}" CASCADE'))
+                    except: pass
+            except: pass
+
+            conn.execute(text("ANALYZE;"))
+            conn.execute(text("DISCARD ALL;"))
+            print("MIGRAÇÃO V20 CONCLUÍDA. ✅")
             
     except Exception:
-        print("Erro crítico na migração V19:")
+        print("Erro crítico na migração V20:")
         traceback.print_exc()
 
 
