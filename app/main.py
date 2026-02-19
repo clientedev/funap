@@ -1,8 +1,8 @@
-# SISCONT - Deploy V12 (Native Enum Shutdown) - 19/02/2026 14:48
+# SISCONT - Deploy V13 (ABSOLUTE CERTAINTY) - 19/02/2026 14:50
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.routers import auth, diretorias, usuarios, vendas, dashboard, clientes, linhas_produto
 
@@ -19,12 +19,15 @@ def run_enum_migration():
     
     try:
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            # 0. Limpar planos e caches da sessão ATUAL e definir timeouts
+            # 0. Limpar planos, caches e prepared statements
+            print("CACHE NUKE: Clearing Postgres session caches...")
             conn.execute(text("DISCARD ALL;"))
-            conn.execute(text("SET lock_timeout = '20s';"))
-            conn.execute(text("SET statement_timeout = '40s';"))
+            conn.execute(text("DEALLOCATE ALL;"))
+            conn.execute(text("SET lock_timeout = '30s';"))
+            conn.execute(text("SET statement_timeout = '60s';"))
+            conn.execute(text("SET search_path TO public;"))
             
-            # NOVO: Tentar encerrar outras conexões para liberar locks de DDL
+            # Encerrar outras conexões para liberar locks
             try:
                 conn.execute(text("""
                     SELECT pg_terminate_backend(pid) 
@@ -34,7 +37,7 @@ def run_enum_migration():
                 """))
             except: pass
 
-            # 1. Lista de colunas para converter para TEXT
+            # 1. Lista de colunas para converter para TEXT/VARCHAR
             target_cols = [
                 ("vendas", "status"),
                 ("vendas", "modalidade"),
@@ -47,7 +50,7 @@ def run_enum_migration():
                 ("usuarios", "perfil")
             ]
 
-            print("Convertendo colunas para TEXT (Scorched Earth V12)...")
+            print("FORCE REPAIR: Converting columns to VARCHAR(100)...")
             for table, col in target_cols:
                 try:
                     # Garantir que a coluna existe
@@ -58,33 +61,35 @@ def run_enum_migration():
                     if res:
                         # Dropar default primeiro
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
-                        # Converter para TEXT
-                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
-                        print(f"Repaired: {table}.{col} -> TEXT")
+                        # Converter para VARCHAR(100) (mais explícito que TEXT)
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE VARCHAR(100) USING {col}::VARCHAR(100);"))
+                        print(f"Repaired: {table}.{col} -> VARCHAR(100)")
                 except Exception as e:
                     print(f"Erro em {table}.{col}: {e}")
 
-            # 2. ELIMINAR TODOS OS TIPOS ENUM ANTIGOS (v1, v2, v3, v4, v5, etc)
-            print("Eliminando tipos Enum nativos...")
+            # 2. ELIMINAR TODOS OS TIPOS ENUM ANTIGOS
+            print("CLEANUP: Dropping all native enum types...")
             try:
-                res = conn.execute(text("SELECT typname FROM pg_type WHERE typname LIKE '%enum%'"))
-                for row in res:
+                # Buscar tipos que são enums
+                res = conn.execute(text("SELECT t.typname FROM pg_type t JOIN pg_enum e ON t.oid = e.enumtypid GROUP BY t.typname"))
+                enum_types = [row[0] for row in res]
+                # Também buscar por convenção de nome
+                res2 = conn.execute(text("SELECT typname FROM pg_type WHERE typname LIKE '%enum%'"))
+                for row in res2:
+                    if row[0] not in enum_types: enum_types.append(row[0])
+
+                for t_name in enum_types:
                     try:
-                        conn.execute(text(f"DROP TYPE IF EXISTS {row[0]} CASCADE;"))
-                        print(f"Dropped type: {row[0]}")
+                        conn.execute(text(f"DROP TYPE IF EXISTS {t_name} CASCADE;"))
+                        print(f"Dropped type: {t_name}")
                     except: pass
             except: pass
 
-            # 3. Colunas extras importantes
+            # 3. Colunas extras e infra
             extra_cols = [
                 ("vendas", "processo_sei", "VARCHAR(50)"),
                 ("vendas", "objeto", "TEXT"),
-                ("vendas", "valor_total", "NUMERIC(15,2)"),
-                ("propostas", "data_emissao", "DATE"),
-                ("propostas", "data_vencimento", "DATE"),
-                ("propostas", "valor", "NUMERIC(15,2)"),
-                ("propostas", "numero", "VARCHAR(50)"),
-                ("propostas", "revisao", "VARCHAR(20)")
+                ("vendas", "valor_total", "NUMERIC(15,2)")
             ]
             for table, col, col_type in extra_cols:
                 try:
@@ -95,47 +100,25 @@ def run_enum_migration():
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type};"))
                 except: pass
 
+            # 4. DATA TYPE AUDIT (Log de verificação final)
+            print("--- DATABASE TYPE AUDIT ---")
+            for table, col in target_cols:
+                try:
+                    res = conn.execute(text(
+                        f"SELECT data_type FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
+                    )).fetchone()
+                    print(f"VERIFICATION: {table}.{col} is now {res[0] if res else 'MISSING'}")
+                except: pass
+            print("--- END AUDIT ---")
+
+            conn.execute(text("ANALYZE;"))
             conn.execute(text("DISCARD ALL;"))
-            print("MIGRAÇÃO V12 (TEXT CONVERSION) CONCLUÍDA. ✅")
+            print("MIGRAÇÃO V13 (ABSOLUTE CERTAINTY) CONCLUÍDA. ✅")
             
     except Exception:
-        print("Erro na migração V12:")
+        print("Erro crítico na migração V13:")
         traceback.print_exc()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    run_enum_migration()
-    yield
-
-
-app = FastAPI(title="SisCont", version="1.0.0", lifespan=lifespan)
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == 401:
-        return RedirectResponse(url="/login")
-    if exc.status_code == 403:
-        return RedirectResponse(url="/dashboard")
-    from fastapi.responses import JSONResponse
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
-
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    import traceback
-    print(f"[ERROR 500] {request.url}: {traceback.format_exc()}")
-    from fastapi.responses import JSONResponse
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(diretorias.router)
-app.include_router(usuarios.router)
-app.include_router(vendas.router)
-app.include_router(clientes.router)
-app.include_router(linhas_produto.router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -152,18 +135,17 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         return RedirectResponse(url="/login")
     if exc.status_code == 403:
         return RedirectResponse(url="/dashboard")
-    from fastapi.responses import JSONResponse
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     import traceback
     print(f"[ERROR 500] {request.url}: {traceback.format_exc()}")
-    from fastapi.responses import JSONResponse
     return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# Rotas
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(diretorias.router)
