@@ -1,4 +1,4 @@
-# SISCONT - Deploy V7 (Deep Reset) - 19/02/2026 14:15
+# SISCONT - Deploy V8 (Sync Remote Repair) - 19/02/2026 14:18
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
