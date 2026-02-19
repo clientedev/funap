@@ -9,6 +9,8 @@ from app.database import Base
 class PerfilEnum(str, enum.Enum):
     admin = "admin"
     usuario = "usuario"
+    comercial = "comercial"
+    financeiro = "financeiro"
 
 
 class Usuario(Base):

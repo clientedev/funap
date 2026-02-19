@@ -28,8 +28,15 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between">
                 <span>Informações do Objeto</span>
-                <span class="badge {% if venda.status == 'aberta' %}bg-primary{% else %}bg-success{% endif %}">{{
-                    venda.status | upper }}</span>
+                <span class="badge 
+                        {% if venda.status == 'EM ANDAMENTO' %}bg-primary
+                        {% elif venda.status == 'AGUARDANDO PROPOSTA' or venda.status == 'AGUARDANDO EMPENHO' %}bg-warning
+                        {% elif venda.status == 'FATURADO' %}bg-info
+                        {% elif venda.status == 'FINALIZADA' %}bg-success
+                        {% elif venda.status == 'CANCELADA' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                    {{ venda.status }}
+                </span>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -57,27 +64,27 @@
         <ul class="nav nav-pills mb-3 gap-2" id="vendaFlow" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active border" id="custo-tab" data-bs-toggle="pill" data-bs-target="#custo"
-                    type="button">1. Custo/Prazos</button>
+                    type="button">DIPRO</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link border" id="proposta-tab" data-bs-toggle="pill" data-bs-target="#proposta"
-                    type="button">2. Propostas</button>
+                    type="button">Proposta</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link border" id="contrato-tab" data-bs-toggle="pill" data-bs-target="#contrato"
-                    type="button">3. Contratos</button>
+                    type="button">Contrato</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link border" id="empenho-tab" data-bs-toggle="pill" data-bs-target="#empenho"
-                    type="button">4. Empenhos</button>
+                    type="button">Empenho</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link border" id="pedido-tab" data-bs-toggle="pill" data-bs-target="#pedido"
-                    type="button">5. Pedidos</button>
+                    type="button">Pedido</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link border" id="nf-tab" data-bs-toggle="pill" data-bs-target="#nf" type="button">6.
-                    Notas Fiscais</button>
+                <button class="nav-link border" id="nf-tab" data-bs-toggle="pill" data-bs-target="#nf"
+                    type="button">Nota Fiscal</button>
             </li>
         </ul>
 
@@ -210,7 +217,15 @@
                                     <td>{{ c.numero }}</td>
                                     <td>{{ c.data_envio_sei_contratos.strftime('%d/%m/%Y') if c.data_envio_sei_contratos
                                         else '-' }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ c.status }}</span></td>
+                                    <td>
+                                        {% if c.status == 'ATIVO' %}
+                                        <span class="badge bg-success">{{ c.status }}</span>
+                                        {% elif c.status == 'CANCELADO' %}
+                                        <span class="badge bg-danger">{{ c.status }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark border">{{ c.status }}</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         <a href="/vendas/{{ venda.id }}/contrato/{{ c.id }}/excluir"
                                             class="btn btn-sm btn-link text-danger p-0" title="Excluir"
@@ -258,7 +273,17 @@
                                     <td>{{ e.data_recebimento.strftime('%d/%m/%Y') if e.data_recebimento else '-' }}
                                     </td>
                                     <td>{{ e.prazo_entrega.strftime('%d/%m/%Y') if e.prazo_entrega else '-' }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ e.status }}</span></td>
+                                    <td>
+                                        {% if e.status == 'PENDENTE' %}
+                                        <span class="badge bg-warning text-dark">{{ e.status }}</span>
+                                        {% elif e.status == 'EMITIDO' %}
+                                        <span class="badge bg-success">{{ e.status }}</span>
+                                        {% elif e.status == 'CANCELADO' %}
+                                        <span class="badge bg-danger">{{ e.status }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark border">{{ e.status }}</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         <a href="/vendas/{{ venda.id }}/empenho/{{ e.id }}/excluir"
                                             class="btn btn-sm btn-link text-danger p-0" title="Excluir"
@@ -303,7 +328,15 @@
                                 <tr>
                                     <td>{{ p.numero }}</td>
                                     <td>{{ p.prazo_entrega.strftime('%d/%m/%Y') if p.prazo_entrega else '-' }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ p.status }}</span></td>
+                                    <td>
+                                        {% if p.status == 'PENDENTE' %}
+                                        <span class="badge bg-warning text-dark">{{ p.status }}</span>
+                                        {% elif p.status == 'FINALIZADO' %}
+                                        <span class="badge bg-success">{{ p.status }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark border">{{ p.status }}</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         <a href="/vendas/{{ venda.id }}/pedido/{{ p.id }}/excluir"
                                             class="btn btn-sm btn-link text-danger p-0" title="Excluir"
@@ -435,10 +468,149 @@
                         <input type="date" name="data_vencimento" class="form-control" required>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Status</label>
+                    <select name="status" class="form-select" required>
+                        <option value="PENDENTE">PENDENTE</option>
+                        <option value="APROVADA">APROVADA</option>
+                        <option value="CANCELADA">CANCELADA</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
                 <button type="submit" class="btn btn-primary">Salvar Proposta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Contrato -->
+<div class="modal fade" id="modalContrato" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/contrato" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número do Contrato</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: CT 001/2024">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Data Envio SEI (Contratos)</label>
+                    <input type="date" name="data_envio_sei" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Contrato</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Empenho -->
+<div class="modal fade" id="modalEmpenho" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/empenho" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Empenho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número da Nota de Empenho</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: 2024NE001">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data Recebimento</label>
+                        <input type="date" name="data_recebimento" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Prazo de Entrega</label>
+                        <input type="date" name="prazo_entrega" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Empenho</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Pedido -->
+<div class="modal fade" id="modalPedido" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/pedido" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Pedido de Produção</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número do Pedido</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: 2024/045">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Prazo de Entrega (Produção)</label>
+                    <input type="date" name="prazo_entrega" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Status</label>
+                    <select name="status" class="form-select" required>
+                        <option value="PENDENTE">PENDENTE</option>
+                        <option value="FINALIZADO">FINALIZADO</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Pedido</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nota Fiscal -->
+<div class="modal fade" id="modalNF" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/nota-fiscal" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Nota Fiscal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número da Nota Fiscal</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: 001.234">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data de Emissão</label>
+                        <input type="date" name="data_emissao" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Valor (R$)</label>
+                        <input type="number" step="0.01" name="valor" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Status Entrega</label>
+                    <select name="status_entrega" class="form-select" required>
+                        <option value="PENDENTE">PENDENTE</option>
+                        <option value="ENTREGA PARCIAL">ENTREGA PARCIAL</option>
+                        <option value="ENTREGA TOTAL">ENTREGA TOTAL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Nota Fiscal</button>
             </div>
         </form>
     </div>
@@ -477,12 +649,12 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Status</label>
                         <select name="status_venda" class="form-select">
-                            <option value="aberta" {% if venda.status.value=='aberta' %}selected{% endif %}>Aberta
+                            <option value="ABERTA" {% if venda.status.value=='ABERTA' %}selected{% endif %}>ABERTA
                             </option>
-                            <option value="finalizada" {% if venda.status.value=='finalizada' %}selected{% endif %}>
-                                Finalizada</option>
-                            <option value="cancelada" {% if venda.status.value=='cancelada' %}selected{% endif %}>
-                                Cancelada</option>
+                            <option value="FINALIZADA" {% if venda.status.value=='FINALIZADA' %}selected{% endif %}>
+                                FINALIZADA</option>
+                            <option value="CANCELADA" {% if venda.status.value=='CANCELADA' %}selected{% endif %}>
+                                CANCELADA</option>
                         </select>
                     </div>
                     <!-- Hidden fields required by the router's update_venda but usually not changed here -->

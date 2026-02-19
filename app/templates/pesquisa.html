@@ -16,20 +16,23 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Nome do Cliente</label>
-                            <input type="text" name="cliente_nome" class="form-control"
-                                placeholder="Ex: Prefeitura Municipal...">
+                            <input type="text" name="q" class="form-control" placeholder="Ex: Prefeitura Municipal...">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Status da Venda</label>
-                            <select name="venda_status" class="form-select">
+                            <select name="status" class="form-select">
                                 <option value="">Todos</option>
-                                <option value="aberta">Aberta</option>
-                                <option value="finalizada">Finalizada</option>
+                                <option value="EM ANDAMENTO">Em Andamento</option>
+                                <option value="AGUARDANDO PROPOSTA">Aguardando Proposta</option>
+                                <option value="AGUARDANDO EMPENHO">Aguardando Empenho</option>
+                                <option value="FATURADO">Faturado</option>
+                                <option value="FINALIZADA">Finalizada</option>
+                                <option value="CANCELADA">Cancelada</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Número da Proposta</label>
-                            <input type="text" name="proposta_numero" class="form-control" placeholder="P-2024-...">
+                            <input type="text" name="proposta_num" class="form-control" placeholder="P-2024-...">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Linha de Produto</label>
@@ -45,7 +48,7 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Número do Pedido</label>
-                            <input type="text" name="pedido_numero" class="form-control" placeholder="PED-...">
+                            <input type="text" name="pedido_num" class="form-control" placeholder="PED-...">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Status do Pedido</label>
@@ -57,7 +60,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Número da Nota Fiscal</label>
-                            <input type="text" name="nota_fiscal_numero" class="form-control" placeholder="NF-...">
+                            <input type="text" name="nfe_num" class="form-control" placeholder="NF-...">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">Status da Proposta</label>

@@ -7,7 +7,10 @@ from app.database import Base
 
 
 class VendaStatusEnum(str, enum.Enum):
-    aberta = "ABERTA"
+    em_andamento = "EM ANDAMENTO"
+    aguardando_proposta = "AGUARDANDO PROPOSTA"
+    aguardando_empenho = "AGUARDANDO EMPENHO"
+    faturado = "FATURADO"
     finalizada = "FINALIZADA"
     cancelada = "CANCELADA"
 

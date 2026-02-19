@@ -7,9 +7,9 @@ from app.database import Base
 
 
 class EmpenhoStatusEnum(str, enum.Enum):
-    pendente = "pendente"
-    emitido = "emitido"
-    cancelado = "cancelado"
+    pendente = "PENDENTE"
+    emitido = "EMITIDO"
+    cancelado = "CANCELADO"
 
 
 class Empenho(Base):

@@ -91,7 +91,7 @@ async def create_venda(
         modalidade=modalidade,
         processo_sei=processo_sei,
         numero=numero or f"V-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        status="aberta"
+        status="EM ANDAMENTO"
     )
     db.add(venda)
     db.commit()
@@ -148,9 +148,13 @@ async def create_solicitacao_custo(
         data_resposta=datetime.strptime(data_resposta, "%Y-%m-%d").date() if data_resposta else None,
         descricao=descricao,
         valor_estimado=valor_estimado,
-        status="pendente"
+        status="PENDENTE"
     )
     db.add(sc)
+    
+    # Atualiza status da venda
+    venda.status = "AGUARDANDO PROPOSTA"
+    
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 
@@ -163,6 +167,7 @@ async def create_proposta(
     valor: float = Form(...),
     data_emissao: str = Form(...),
     data_vencimento: str = Form(...),
+    status: str = Form("PENDENTE"),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
@@ -179,9 +184,16 @@ async def create_proposta(
         valor=valor,
         data_emissao=datetime.strptime(data_emissao, "%Y-%m-%d").date(),
         data_vencimento=datetime.strptime(data_vencimento, "%Y-%m-%d").date(),
-        status="PENDENTE"
+        status=status.upper()
     )
     db.add(p)
+    
+    # Se a proposta for aprovada, atualiza status da venda
+    if status.upper() == "APROVADA":
+        venda.status = "AGUARDANDO EMPENHO"
+    elif venda.status == "AGUARDANDO PROPOSTA": # Se a venda estava aguardando proposta, agora está em análise
+        venda.status = "PROPOSTA EM ANÁLISE"
+    
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 
@@ -205,7 +217,7 @@ async def create_contrato(
         venda_id=venda_id,
         numero=numero,
         data_envio_sei_contratos=datetime.strptime(data_envio_sei, "%Y-%m-%d").date(),
-        status="ativo"
+        status="ATIVO"
     )
     db.add(c)
     db.commit()
@@ -233,9 +245,14 @@ async def create_empenho(
         numero=numero,
         data_recebimento=datetime.strptime(data_recebimento, "%Y-%m-%d").date(),
         prazo_entrega=datetime.strptime(prazo_entrega, "%Y-%m-%d").date(),
-        status="emitido"
+        status="PENDENTE"
     )
     db.add(e)
+    
+    # Atualiza status da venda
+    if venda.status == "AGUARDANDO EMPENHO":
+        venda.status = "EMPENHADO"
+    
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 
@@ -262,6 +279,11 @@ async def create_pedido(
         status=status
     )
     db.add(p)
+    
+    # Atualiza status da venda
+    if venda.status == "EMPENHADO":
+        venda.status = "PEDIDO EMITIDO"
+    
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 
@@ -287,9 +309,14 @@ async def create_nota_fiscal(
         numero=numero,
         data_emissao=datetime.strptime(data_emissao, "%Y-%m-%d").date(),
         valor=valor,
-        status_entrega=status_entrega
+        status_entrega=status_entrega.upper()
     )
     db.add(nf)
+    
+    # Se ainda não estiver faturada ou finalizada, marca como faturado
+    if venda.status not in ["FATURADO", "FINALIZADA"]:
+        venda.status = "FATURADO"
+        
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 

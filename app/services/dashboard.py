@@ -14,9 +14,10 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
     if diretoria_id:
         filters.append(Venda.diretoria_id == diretoria_id)
 
-    # Vendas Abertas
-    vendas_abertas = db.query(func.count(Venda.id)).filter(
-        Venda.status == VendaStatusEnum.aberta, *filters
+    # Vendas em Andamento (Tudo que não é Finalizada ou Cancelada)
+    vendas_andamento = db.query(func.count(Venda.id)).filter(
+        Venda.status.notin_([VendaStatusEnum.finalizada, VendaStatusEnum.cancelada]), 
+        *filters
     ).scalar()
 
     # Vendas Finalizadas
@@ -24,7 +25,7 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
         Venda.status == VendaStatusEnum.finalizada, *filters
     ).scalar()
 
-    # Propostas Pendentes (join necessário se filtrar por diretoria na venda)
+    # Propostas Pendentes
     propostas_pendentes_query = db.query(func.count(Proposta.id)).join(Venda)
     if diretoria_id:
         propostas_pendentes_query = propostas_pendentes_query.filter(Venda.diretoria_id == diretoria_id)
@@ -39,10 +40,19 @@ def get_dashboard_metrics(db: Session, diretoria_id: int | None = None):
     pedidos_pendentes = pedidos_pendentes_query.filter(
         Pedido.status == PedidoStatusEnum.pendente
     ).scalar()
+    
+    # Notas com Entrega Parcial
+    notas_parciais_query = db.query(func.count(NotaFiscal.id)).join(Venda)
+    if diretoria_id:
+        notas_parciais_query = notas_parciais_query.filter(Venda.diretoria_id == diretoria_id)
+    notas_parciais = notas_parciais_query.filter(
+        NotaFiscal.status_entrega == NFEStatusEntregaEnum.parcial
+    ).scalar()
 
     return {
-        "vendas_abertas": vendas_abertas,
+        "vendas_andamento": vendas_andamento,
         "vendas_finalizadas": vendas_finalizadas,
         "propostas_pendentes": propostas_pendentes,
-        "pedidos_pendentes": pedidos_pendentes
+        "pedidos_pendentes": pedidos_pendentes,
+        "notas_parciais": notas_parciais
     }

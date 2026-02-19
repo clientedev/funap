@@ -7,9 +7,9 @@ from app.database import Base
 
 
 class SolicitacaoCustoStatusEnum(str, enum.Enum):
-    pendente = "pendente"
-    aprovada = "aprovada"
-    recusada = "recusada"
+    pendente = "PENDENTE"
+    aprovada = "APROVADA"
+    recusada = "RECUSADA"
 
 
 class SolicitacaoCusto(Base):

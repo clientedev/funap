@@ -7,14 +7,14 @@
 {% block content %}
 <!-- Cards de Métricas -->
 <div class="row">
-    <div class="col-xl-3 col-md-6">
-        <div class="card metric-card">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card metric-card h-100">
             <div class="card-body">
                 <div class="metric-icon bg-light-primary text-primary">
                     <i class="fas fa-shopping-cart"></i>
                 </div>
-                <h6 class="text-muted small text-uppercase fw-bold">Vendas Ativas</h6>
-                <h2 class="fw-bold mb-0 text-success">{{ metrics.vendas_abertas }}</h2>
+                <h6 class="text-muted small text-uppercase fw-bold">Vendas em Andamento</h6>
+                <h2 class="fw-bold mb-0 text-success">{{ metrics.vendas_andamento }}</h2>
             </div>
         </div>
     </div>
@@ -40,14 +40,25 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card metric-card">
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card metric-card h-100">
             <div class="card-body">
                 <div class="metric-icon bg-light-danger text-danger">
                     <i class="fas fa-shipping-fast"></i>
                 </div>
                 <h6 class="text-muted small text-uppercase fw-bold">Pedidos Pen.</h6>
                 <h2 class="fw-bold mb-0 text-success">{{ metrics.pedidos_pendentes }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 mb-4">
+        <div class="card metric-card h-100">
+            <div class="card-body">
+                <div class="metric-icon bg-light-info text-info">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h6 class="text-muted small text-uppercase fw-bold">Notas Parciais</h6>
+                <h2 class="fw-bold mb-0 text-success">{{ metrics.notas_parciais }}</h2>
             </div>
         </div>
     </div>
@@ -98,6 +109,10 @@
     .bg-light-danger {
         background-color: rgba(244, 67, 54, 0.1);
     }
+
+    .bg-light-info {
+        background-color: rgba(0, 188, 212, 0.1);
+    }
 </style>
 {% endblock %}
 
@@ -109,9 +124,9 @@
     new Chart(ctxStatus, {
         type: 'doughnut',
         data: {
-            labels: ['Abertas', 'Finalizadas'],
+            labels: ['Em Andamento', 'Finalizadas'],
             datasets: [{
-                data: [{{ metrics.vendas_abertas }}, {{ metrics.vendas_finalizadas }}],
+                data: [{{ metrics.vendas_andamento }}, {{ metrics.vendas_finalizadas }}],
         backgroundColor: ['#2e7d32', '#8bc34a'],
         borderWidth: 0
     }]

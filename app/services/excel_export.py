@@ -14,6 +14,8 @@ def export_vendas_to_excel(vendas: List[Venda], user_nome: str) -> BytesIO:
     for v in vendas:
         # Get latest records for each phase
         proposta = v.propostas[-1] if v.propostas else None
+        contrato = v.contratos[-1] if v.contratos else None
+        empenho = v.empenhos[-1] if v.empenhos else None
         pedido = v.pedidos[-1] if v.pedidos else None
         nf = v.notas_fiscais[-1] if v.notas_fiscais else None
         
@@ -30,10 +32,18 @@ def export_vendas_to_excel(vendas: List[Venda], user_nome: str) -> BytesIO:
             "Proposta": proposta.numero if proposta else "N/A",
             "Vencimento Proposta": (proposta.data_vencimento.strftime("%d/%m/%Y") if proposta.data_vencimento else "N/A") if proposta else "N/A",
             "Status Proposta": (proposta.status.value if hasattr(proposta.status, 'value') else proposta.status) if proposta else "N/A",
+            "Contrato": contrato.numero if contrato else "N/A",
+            "Envio SEI Contratos": (contrato.data_envio_sei_contratos.strftime("%d/%m/%Y") if contrato.data_envio_sei_contratos else "N/A") if contrato else "N/A",
+            "Status Contrato": (contrato.status.value if hasattr(contrato.status, 'value') else contrato.status) if contrato else "N/A",
+            "Empenho": empenho.numero if empenho else "N/A",
+            "Recebimento Empenho": (empenho.data_recebimento.strftime("%d/%m/%Y") if empenho.data_recebimento else "N/A") if empenho else "N/A",
+            "Status Empenho": (empenho.status.value if hasattr(empenho.status, 'value') else empenho.status) if empenho else "N/A",
             "Pedido": pedido.numero if pedido else "N/A",
+            "Prazo Entrega Pedido": (pedido.prazo_entrega.strftime("%d/%m/%Y") if pedido.prazo_entrega else "N/A") if pedido else "N/A",
             "Status Pedido": (pedido.status.value if hasattr(pedido.status, 'value') else pedido.status) if pedido else "N/A",
             "Nota Fiscal": nf.numero if nf else "N/A",
             "Data Emissão NF": nf.data_emissao.strftime("%d/%m/%Y") if nf and nf.data_emissao else "N/A",
+            "Valor NF": nf.valor if nf else 0.0,
             "Status Entrega": (nf.status_entrega.value if hasattr(nf.status_entrega, 'value') else nf.status_entrega) if nf else "N/A",
             "Data Criação": v.created_at.strftime("%d/%m/%Y %H:%M") if v.created_at else "N/A"
         }
