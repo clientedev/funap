@@ -1,4 +1,4 @@
-# SISCONT - Deploy V37 (EMERGENCY AUDIT) - 19/02/2026 19:10
+# SISCONT - Deploy V38 (EXHAUSTION AUDIT) - 19/02/2026 19:20
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -26,22 +26,21 @@ async def debug_db_schema():
     from app.database import engine
     try:
         with engine.connect() as conn:
-            # 1. Check counts
-            tables = ["vendas", "solicitacoes_custo", "propostas", "contratos", "empenhos", "pedidos", "notas_fiscais"]
+            # 1. LIST EVERY TABLE
+            all_tables = conn.execute(text("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'")).fetchall()
+            
+            # 2. CHECK COUNTS FOR EVERYTHING
             counts = {}
-            for t in tables:
+            for t in [row[0] for row in all_tables]:
                 try: res = conn.execute(text(f"SELECT COUNT(*) FROM {t}")).fetchone(); counts[t] = res[0]
-                except: counts[t] = "ERROR"
+                except: counts[t] = "ERR"
             
-            # 2. Check if ANY backup table exists still
-            backups = conn.execute(text("SELECT tablename FROM pg_catalog.pg_tables WHERE tablename LIKE '%%ghost%%' OR tablename LIKE '%%v19%%' OR tablename LIKE '%%v21%%'")).fetchall()
-            
-            # 3. Check Venda columns
-            v_cols = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'vendas'")).fetchall()
+            # 3. Check for the "Venda #1" content
+            venda_sample = conn.execute(text("SELECT * FROM vendas LIMIT 5")).fetchall()
             
             return {
-                "counts": counts,
-                "backup_tables": [b[0] for b in backups],
-                "venda_columns": [v[0] for v in v_cols]
+                "all_tables_found": [row[0] for row in all_tables],
+                "all_counts": counts,
+                "venda_sample": [str(v) for v in venda_sample]
             }
     except Exception as e: return {"error": str(e)}
