@@ -135,29 +135,29 @@
     new Chart(ctxEvolucao, {
         type: 'line',
         data: {
-            labels: {{ metrics.graficos.evolucao.labels | tojson }},
+            labels: [{% for label in metrics.graficos.evolucao.labels %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
             label: 'Novas Vendas',
-            data: {{ metrics.graficos.evolucao.values | tojson }},
-        borderColor: '#2e7d32',
+            data: [{% for val in metrics.graficos.evolucao.values %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    borderColor: '#2e7d32',
         borderWidth: 3,
-        tension: 0.4,
-        fill: true,
-        backgroundColor: gradient,
-        pointBackgroundColor: '#2e7d32',
-        pointBorderColor: '#fff',
-        pointHoverRadius: 6
+            tension: 0.4,
+                fill: true,
+                    backgroundColor: gradient,
+                        pointBackgroundColor: '#2e7d32',
+                            pointBorderColor: '#fff',
+                                pointHoverRadius: 6
             }]
         },
-        options: {
+    options: {
         maintainAspectRatio: false,
-        plugins: {
+            plugins: {
             legend: { display: false }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { borderDash: [5, 5] },
+                    grid: { borderDash: [5, 5] },
                 ticks: { stepSize: 1 }
             },
             x: {
@@ -172,26 +172,26 @@
     new Chart(ctxLinha, {
         type: 'doughnut',
         data: {
-            labels: {{ metrics.graficos.linha_produto.labels | tojson }},
+            labels: [{% for label in metrics.graficos.linha_produto.labels %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
-            data: {{ metrics.graficos.linha_produto.values | tojson }},
-        backgroundColor: [
-            '#1b5e20', '#2e7d32', '#388e3c', '#43a047',
-            '#4caf50', '#66bb6a', '#81c784'
-        ],
+            data: [{% for val in metrics.graficos.linha_produto.values %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: [
+        '#1b5e20', '#2e7d32', '#388e3c', '#43a047',
+        '#4caf50', '#66bb6a', '#81c784'
+    ],
         borderWidth: 2,
-        borderColor: '#fff'
+            borderColor: '#fff'
             }]
         },
-        options: {
+    options: {
         maintainAspectRatio: false,
-        cutout: '70%',
-        plugins: {
+            cutout: '70%',
+                plugins: {
             legend: {
                 position: 'bottom',
-                labels: {
+                    labels: {
                     usePointStyle: true,
-                    padding: 20
+                        padding: 20
                 }
             }
         }
