@@ -20,7 +20,7 @@ class Usuario(Base):
     nome: Mapped[str] = mapped_column(String(150), nullable=False)
     email: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    perfil: Mapped[PerfilEnum] = mapped_column(SAEnum(PerfilEnum, name="perfilenum_v5"), default=PerfilEnum.usuario, nullable=False)
+    perfil: Mapped[PerfilEnum] = mapped_column(SAEnum(PerfilEnum, native_enum=False), default=PerfilEnum.usuario, nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     diretoria_id: Mapped[int | None] = mapped_column(ForeignKey("diretorias.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

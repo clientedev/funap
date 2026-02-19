@@ -23,7 +23,7 @@ class Empenho(Base):
     data_recebimento: Mapped[date | None] = mapped_column(Date, nullable=True)
     prazo_entrega: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[EmpenhoStatusEnum] = mapped_column(
-        SAEnum(EmpenhoStatusEnum, name="empenhostatusenum_v5"), default=EmpenhoStatusEnum.pendente, nullable=False, index=True
+        SAEnum(EmpenhoStatusEnum, native_enum=False), default=EmpenhoStatusEnum.pendente, nullable=False, index=True
     )
     observacoes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

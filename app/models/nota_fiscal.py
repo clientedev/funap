@@ -24,7 +24,7 @@ class NotaFiscal(Base):
     valor: Mapped[float | None] = mapped_column(Numeric(15, 2), nullable=True)
     data_emissao: Mapped[date | None] = mapped_column(Date, nullable=True)
     status_entrega: Mapped[NFEStatusEntregaEnum] = mapped_column(
-        SAEnum(NFEStatusEntregaEnum, name="nfestatusentregaenum_v5"), default=NFEStatusEntregaEnum.pendente, nullable=False, index=True
+        SAEnum(NFEStatusEntregaEnum, native_enum=False), default=NFEStatusEntregaEnum.pendente, nullable=False, index=True
     )
     chave_acesso: Mapped[str | None] = mapped_column(String(44), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
