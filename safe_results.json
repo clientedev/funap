@@ -1,0 +1,58 @@
+﻿{
+    "ghost_oid":  21978,
+    "pg_depend_raw":  [
+                          {
+                              "cid":  1259,
+                              "oid":  16521,
+                              "sub":  15,
+                              "rcid":  1247,
+                              "roid":  21978,
+                              "type":  "n"
+                          },
+                          {
+                              "cid":  2604,
+                              "oid":  22215,
+                              "sub":  0,
+                              "rcid":  1247,
+                              "roid":  21978,
+                              "type":  "n"
+                          }
+                      ],
+    "defaults_brutos":  [
+                            {
+                                "table":  "usuarios",
+                                "col_num":  1,
+                                "adbin_sample":  "{FUNCEXPR :funcid 480 :funcresulttype 23 :funcretset false :funcvariadic false :funcformat 2 :funcco"
+                            },
+                            {
+                                "table":  "usuarios",
+                                "col_num":  8,
+                                "adbin_sample":  "{FUNCEXPR :funcid 1299 :funcresulttype 1184 :funcretset false :funcvariadic false :funcformat 0 :fun"
+                            },
+                            {
+                                "table":  "usuarios",
+                                "col_num":  9,
+                                "adbin_sample":  "{FUNCEXPR :funcid 1299 :funcresulttype 1184 :funcretset false :funcvariadic false :funcformat 0 :fun"
+                            },
+                            {
+                                "table":  "vendas",
+                                "col_num":  1,
+                                "adbin_sample":  "{FUNCEXPR :funcid 480 :funcresulttype 23 :funcretset false :funcvariadic false :funcformat 2 :funcco"
+                            },
+                            {
+                                "table":  "vendas",
+                                "col_num":  12,
+                                "adbin_sample":  "{FUNCEXPR :funcid 1299 :funcresulttype 1184 :funcretset false :funcvariadic false :funcformat 0 :fun"
+                            },
+                            {
+                                "table":  "vendas",
+                                "col_num":  13,
+                                "adbin_sample":  "{FUNCEXPR :funcid 1299 :funcresulttype 1184 :funcretset false :funcvariadic false :funcformat 0 :fun"
+                            },
+                            {
+                                "table":  "vendas",
+                                "col_num":  15,
+                                "adbin_sample":  "{CONST :consttype 21978 :consttypmod -1 :constcollid 0 :constlen 4 :constbyval true :constisnull fal"
+                            }
+                        ]
+}
