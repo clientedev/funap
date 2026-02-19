@@ -1,4 +1,4 @@
-# SISCONT - Deploy V2 (Fix Serialization & Schema) - 19/02/2026 13:45
+# SISCONT - Deploy V3 (Schema Repair) - 19/02/2026 13:58
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -115,6 +115,30 @@ def run_enum_migration():
             try:
                 conn.execute(text("ALTER TYPE perfilenum ADD VALUE IF NOT EXISTS 'comercial';"))
                 conn.execute(text("ALTER TYPE perfilenum ADD VALUE IF NOT EXISTS 'financeiro';"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            # 7. REPARO EXTRA: Garantir colunas faltantes em tabelas críticas
+            try:
+                cols_to_check = [
+                    # (tabela, coluna, tipo)
+                    ("vendas", "processo_sei", "VARCHAR(50)"),
+                    ("vendas", "objeto", "TEXT"),
+                    ("vendas", "valor_total", "NUMERIC(15,2)"),
+                    ("propostas", "data_emissao", "DATE"),
+                    ("propostas", "data_vencimento", "DATE"),
+                    ("propostas", "valor", "NUMERIC(15,2)"),
+                    ("propostas", "numero", "VARCHAR(50)"),
+                    ("propostas", "revisao", "VARCHAR(20)")
+                ]
+                for table, col, col_type in cols_to_check:
+                    res = conn.execute(text(
+                        f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
+                    )).fetchone()
+                    if not res:
+                        print(f"[REPAIR] Adicionando coluna faltante {table}.{col} ({col_type})")
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type};"))
                 conn.commit()
             except Exception:
                 conn.rollback()
