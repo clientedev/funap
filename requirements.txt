@@ -14,3 +14,4 @@ email-validator
 pydantic-settings
 pydantic
 gunicorn
+pandas

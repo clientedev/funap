@@ -14,6 +14,11 @@ from app.models import *
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
 
+# Sobrescrever a URL do banco com a variável de ambiente se estiver disponível
+from app.config import get_settings
+settings = get_settings()
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
 # Interpret the config file for Python logging. This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
