@@ -171,11 +171,16 @@ async def debug_db_schema():
             
             # 2. Hunting OID 21978
             oid_res = conn.execute(text("""
-                SELECT 'type' as category, typname as name FROM pg_type WHERE oid = 21978
+                SELECT 
+                    'type_detail' as category, 
+                    typname || ' (ns:' || typnamespace::text || ', cat:' || typcategory || ')' as name 
+                FROM pg_type WHERE oid = 21978
                 UNION ALL
                 SELECT 'cast' as category, castsource::text || '->' || casttarget::text as name FROM pg_cast WHERE castsource = 21978 OR casttarget = 21978
                 UNION ALL
-                SELECT 'attr' as category, relname || '.' || attname as name FROM pg_attribute a JOIN pg_class c ON a.attrelid = c.oid WHERE atttypid = 21978
+                SELECT 'attr_atttypid' as category, relname || '.' || attname as name FROM pg_attribute a JOIN pg_class c ON a.attrelid = c.oid WHERE atttypid = 21978
+                UNION ALL
+                SELECT 'attr_atttypmod' as category, relname || '.' || attname as name FROM pg_attribute a JOIN pg_class c ON a.attrelid = c.oid WHERE atttypmod = 21978
             """)).fetchall()
             
             return {
