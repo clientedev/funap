@@ -161,12 +161,26 @@ async def debug_db_schema():
     target_tables = ['vendas', 'propostas', 'contratos', 'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo', 'usuarios']
     try:
         with engine.connect() as conn:
-            res = conn.execute(text(f"""
+            # 1. Column Types
+            schema_res = conn.execute(text(f"""
                 SELECT table_name, column_name, data_type 
                 FROM information_schema.columns 
                 WHERE table_name IN ({','.join([f"'{t}'" for t in target_tables])})
                 AND (column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
             """)).fetchall()
-            return {"columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in res]}
+            
+            # 2. Hunting OID 21978
+            oid_res = conn.execute(text("""
+                SELECT 'type' as category, typname as name FROM pg_type WHERE oid = 21978
+                UNION ALL
+                SELECT 'cast' as category, castsource::text || '->' || casttarget::text as name FROM pg_cast WHERE castsource = 21978 OR casttarget = 21978
+                UNION ALL
+                SELECT 'attr' as category, relname || '.' || attname as name FROM pg_attribute a JOIN pg_class c ON a.attrelid = c.oid WHERE atttypid = 21978
+            """)).fetchall()
+            
+            return {
+                "columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res],
+                "oid_hunt_21978": [{"category": r[0], "name": r[1]} for r in oid_res]
+            }
     except Exception as e:
         return {"error": str(e)}
