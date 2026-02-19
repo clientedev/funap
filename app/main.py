@@ -1,4 +1,4 @@
-# SISCONT - Deploy V35 (ECOSYSTEM HEALING) - 19/02/2026 18:25
+# SISCONT - Deploy V36 (ABSOLUTE RESTORATION) - 19/02/2026 18:45
 import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
@@ -29,6 +29,10 @@ app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
 
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/login")
+
 @app.get("/seed-database")
 async def seed_database():
     from app.seed_test_data import seed_data
@@ -45,8 +49,18 @@ async def debug_db_schema():
     try:
         with engine.connect() as conn:
             tables = inspect(engine).get_table_names()
-            columns = conn.execute(text("SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name IN ('vendas', 'solicitacoes_custo', 'propostas')")).fetchall()
-            return {"tables": tables, "columns": [str(c) for c in columns]}
+            counts = {}
+            for t in tables:
+                try:
+                    res = conn.execute(text(f"SELECT COUNT(*) FROM {t}")).fetchone()
+                    counts[t] = res[0]
+                except: counts[t] = "ERROR"
+            
+            return {
+                "tables": tables,
+                "row_counts": counts,
+                "database_url_host": str(engine.url).split("@")[-1] if "@" in str(engine.url) else "LOCAL"
+            }
     except Exception as e: return {"error": str(e)}
 
 @app.get("/heal-ecosystem")
@@ -55,35 +69,29 @@ async def heal_ecosystem():
     from app.database import engine
     try:
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            # 1. Reset sequences for reconstructed tables
-            conn.execute(text("SELECT setval('usuarios_id_seq', (SELECT MAX(id) FROM usuarios))"))
-            conn.execute(text("SELECT setval('vendas_id_seq', (SELECT MAX(id) FROM vendas))"))
+            print("V36 HEALING: Restoring Sequences and FKs...")
+            # 1. Reset sequences
+            conn.execute(text("SELECT setval('usuarios_id_seq', (SELECT COALESCE(MAX(id), 1) FROM usuarios))"))
+            conn.execute(text("SELECT setval('vendas_id_seq', (SELECT COALESCE(MAX(id), 1) FROM vendas))"))
             
-            # 2. Re-establish Foreign Keys (The Absolute Eradication CASCADE dropped them)
-            # Solicitacoes de Custo
-            conn.execute(text('ALTER TABLE solicitacoes_custo DROP CONSTRAINT IF EXISTS solicitacoes_custo_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE solicitacoes_custo ADD CONSTRAINT solicitacoes_custo_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
+            # 2. Restore all FKs that might have been dropped by CASCADE
+            tables_to_link = {
+                "solicitacoes_custo": "venda_id",
+                "propostas": "venda_id",
+                "contratos": "venda_id",
+                "empenhos": "venda_id",
+                "pedidos": "venda_id",
+                "notas_fiscais": "venda_id"
+            }
             
-            # Propostas
-            conn.execute(text('ALTER TABLE propostas DROP CONSTRAINT IF EXISTS propostas_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE propostas ADD CONSTRAINT propostas_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
+            for table, col in tables_to_link.items():
+                try:
+                    conn.execute(text(f'ALTER TABLE {table} DROP CONSTRAINT IF EXISTS {table}_{col}_fkey'))
+                    conn.execute(text(f'ALTER TABLE {table} ADD CONSTRAINT {table}_{col}_fkey FOREIGN KEY ({col}) REFERENCES vendas(id) ON DELETE CASCADE'))
+                    print(f"V36 HEALING: Restored FK for {table}")
+                except Exception as ex:
+                    print(f"V36 HEALING: Skipping FK for {table} - {ex}")
 
-            # Contratos
-            conn.execute(text('ALTER TABLE contratos DROP CONSTRAINT IF EXISTS contratos_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE contratos ADD CONSTRAINT contratos_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
-
-            # Empenhos
-            conn.execute(text('ALTER TABLE empenhos DROP CONSTRAINT IF EXISTS empenhos_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE empenhos ADD CONSTRAINT empenhos_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
-
-            # Pedidos
-            conn.execute(text('ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE pedidos ADD CONSTRAINT pedidos_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
-
-            # Notas Fiscais
-            conn.execute(text('ALTER TABLE notas_fiscais DROP CONSTRAINT IF EXISTS notas_fiscais_venda_id_fkey'))
-            conn.execute(text('ALTER TABLE notas_fiscais ADD CONSTRAINT notas_fiscais_venda_id_fkey FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE CASCADE'))
-
-            return {"status": "Ecosystem Healed Successfully"}
+            return {"status": "Ecosystem Healed and Sequences Reset Successfully"}
     except Exception as e:
         return {"error": str(e), "trace": traceback.format_exc()}

@@ -36,7 +36,10 @@ class VendaRepository(BaseRepository[Venda]):
             joinedload(Venda.linha_produto),
             selectinload(Venda.propostas),
             selectinload(Venda.pedidos),
-            selectinload(Venda.notas_fiscais)
+            selectinload(Venda.notas_fiscais),
+            selectinload(Venda.solicitacoes_custo),
+            selectinload(Venda.contratos),
+            selectinload(Venda.empenhos)
         )
 
         # Filtro de Diretoria (sempre aplicado se presente)

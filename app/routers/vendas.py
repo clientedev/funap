@@ -336,13 +336,20 @@ async def update_venda(
     
     security.check_permission(current_user, diretoria_id=venda.diretoria_id)
     
+    status_map = {
+        "ABERTA": "em_andamento",
+        "EM_ANDAMENTO": "em_andamento",
+        "FINALIZADA": "finalizada",
+        "CANCELADA": "cancelada"
+    }
+    
     update_data = {
         "cliente_id": cliente_id,
         "linha_produto_id": linha_produto_id,
         "objeto": objeto,
-        "modalidade": modalidade,
+        "modalidade": modalidade.lower() if modalidade else "venda",
         "processo_sei": processo_sei,
-        "status": status_venda.upper() if status_venda else "ABERTA"
+        "status": status_map.get(status_venda.upper(), "em_andamento")
     }
     venda_repo.update(db, db_obj=venda, obj_in=update_data)
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)

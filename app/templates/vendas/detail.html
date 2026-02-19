@@ -29,13 +29,13 @@
             <div class="card-header d-flex justify-content-between">
                 <span>Informações do Objeto</span>
                 <span class="badge 
-                        {% if venda.status == 'EM ANDAMENTO' %}bg-primary
-                        {% elif venda.status == 'AGUARDANDO PROPOSTA' or venda.status == 'AGUARDANDO EMPENHO' %}bg-warning
-                        {% elif venda.status == 'FATURADO' %}bg-info
-                        {% elif venda.status == 'FINALIZADA' %}bg-success
-                        {% elif venda.status == 'CANCELADA' %}bg-danger
+                        {% if venda.status.value == 'em_andamento' %}bg-primary
+                        {% elif venda.status.value == 'aguardando_proposta' or venda.status.value == 'aguardando_empenho' %}bg-warning
+                        {% elif venda.status.value == 'faturado' %}bg-info
+                        {% elif venda.status.value == 'finalizada' %}bg-success
+                        {% elif venda.status.value == 'cancelada' %}bg-danger
                         {% else %}bg-secondary{% endif %}">
-                    {{ venda.status }}
+                    {{ venda.status.value|upper if venda.status else 'EM ANDAMENTO' }}
                 </span>
             </div>
             <div class="card-body">
@@ -471,9 +471,9 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Status</label>
                     <select name="status" class="form-select" required>
-                        <option value="PENDENTE">PENDENTE</option>
-                        <option value="APROVADA">APROVADA</option>
-                        <option value="CANCELADA">CANCELADA</option>
+                        <option value="pendente">PENDENTE</option>
+                        <option value="aprovada">APROVADA</option>
+                        <option value="cancelada">CANCELADA</option>
                     </select>
                 </div>
             </div>
@@ -563,8 +563,8 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Status</label>
                     <select name="status" class="form-select" required>
-                        <option value="PENDENTE">PENDENTE</option>
-                        <option value="FINALIZADO">FINALIZADO</option>
+                        <option value="pendente">PENDENTE</option>
+                        <option value="finalizado">FINALIZADO</option>
                     </select>
                 </div>
             </div>
@@ -634,11 +634,11 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Modalidade</label>
                         <select name="modalidade" class="form-select">
-                            <option value="VENDA" {% if venda.modalidade.value=='VENDA' %}selected{% endif %}>Venda
+                            <option value="VENDA" {% if venda.modalidade.value=='venda' %}selected{% endif %}>Venda
                             </option>
-                            <option value="LICITACAO" {% if venda.modalidade.value=='LICITACAO' %}selected{% endif %}>
+                            <option value="LICITACAO" {% if venda.modalidade.value=='licitacao' %}selected{% endif %}>
                                 Licitação</option>
-                            <option value="PRODUCAO" {% if venda.modalidade.value=='PRODUCAO' %}selected{% endif %}>
+                            <option value="PRODUCAO" {% if venda.modalidade.value=='producao' %}selected{% endif %}>
                                 Produção</option>
                         </select>
                     </div>
@@ -649,11 +649,11 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Status</label>
                         <select name="status_venda" class="form-select">
-                            <option value="ABERTA" {% if venda.status.value=='ABERTA' %}selected{% endif %}>ABERTA
+                            <option value="ABERTA" {% if venda.status.value=='em_andamento' %}selected{% endif %}>ABERTA
                             </option>
-                            <option value="FINALIZADA" {% if venda.status.value=='FINALIZADA' %}selected{% endif %}>
+                            <option value="FINALIZADA" {% if venda.status.value=='finalizada' %}selected{% endif %}>
                                 FINALIZADA</option>
-                            <option value="CANCELADA" {% if venda.status.value=='CANCELADA' %}selected{% endif %}>
+                            <option value="CANCELADA" {% if venda.status.value=='cancelada' %}selected{% endif %}>
                                 CANCELADA</option>
                         </select>
                     </div>
