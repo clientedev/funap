@@ -29,7 +29,7 @@ class Venda(Base):
     processo_sei: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     objeto: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[VendaStatusEnum] = mapped_column(
-        SAEnum(VendaStatusEnum), default=VendaStatusEnum.aberta, nullable=False, index=True
+        SAEnum(VendaStatusEnum), default=VendaStatusEnum.em_andamento, nullable=False, index=True
     )
     modalidade: Mapped[ModalidadeEnum] = mapped_column(
         SAEnum(ModalidadeEnum), default=ModalidadeEnum.venda, nullable=False, index=True
