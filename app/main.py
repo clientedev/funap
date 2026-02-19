@@ -1,3 +1,4 @@
+# SISCONT - Deploy V2 (Fix Serialization & Schema) - 19/02/2026 13:45
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
