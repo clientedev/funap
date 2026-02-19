@@ -1,4 +1,4 @@
-# SISCONT - Deploy V29 (FORENSIC AUDIT) - 19/02/2026 16:30
+# SISCONT - Deploy V30 (SAFE FORENSIC) - 19/02/2026 16:40
 import os
 import traceback
 from contextlib import asynccontextmanager
@@ -30,63 +30,35 @@ app.include_router(vendas.router)
 app.include_router(clientes.router)
 app.include_router(linhas_produto.router)
 
-@app.get("/seed-database")
-async def seed_database():
-    from app.seed_test_data import seed_data
-    try:
-        seed_data()
-        return {"status": "Database Seeded"}
-    except Exception as e:
-        return {"error": str(e), "trace": traceback.format_exc()}
-
 @app.get("/debug-db-schema")
 async def debug_db_schema():
-    from sqlalchemy import text, inspect
+    from sqlalchemy import text
     from app.database import engine
     try:
         with engine.connect() as conn:
-            # Ghost OID
             GHOST_OID = 21978
             
-            # 1. Dependências detalhadas
+            # 1. Dependências brutas
             deps = conn.execute(text(f"""
-                SELECT 
-                    classid::regclass as class, 
-                    objid as object_id, 
-                    objsubid as sub_id,
-                    refclassid::regclass as ref_class,
-                    refobjid as ref_object_id,
-                    refobjsubid as ref_sub_id,
-                    deptype
+                SELECT classid, objid, objsubid, refclassid, refobjid, deptype
                 FROM pg_depend 
                 WHERE refobjid = {GHOST_OID} OR objid = {GHOST_OID};
             """)).fetchall()
             
-            # 2. Defaults de colunas (pg_attrdef)
-            defaults = conn.execute(text(f"""
-                SELECT 
-                    adrelid::regclass as table_name,
-                    adnum as column_num,
-                    pg_get_expr(adbin, adrelid) as expression
-                FROM pg_attrdef
-                WHERE adbin::text LIKE '%{GHOST_OID}%';
+            # 2. Defaults brutos (sem pg_get_expr que crasha)
+            # Vamos buscar todas as tabelas que tem algum default suspeito
+            # Como não podemos usar LIKE no binary, vamos pegar todos os defaults de 'vendas' e 'usuarios'
+            vendas_defaults = conn.execute(text("""
+                SELECT adrelid::regclass, adnum, adbin::text 
+                FROM pg_attrdef 
+                WHERE adrelid = 'vendas'::regclass OR adrelid = 'usuarios'::regclass;
             """)).fetchall()
-            
-            # 3. Triggers
-            triggers = conn.execute(text(f"""
-                SELECT tgname, tgrelid::regclass as table_name
-                FROM pg_trigger
-                WHERE tgfoid IN (SELECT oid FROM pg_proc WHERE prosrc LIKE '%{GHOST_OID}%');
-            """)).fetchall()
-
-            # 4. Tipos remanescentes
-            ghost_types = conn.execute(text(f"SELECT oid, typname FROM pg_type WHERE typname LIKE '%v4%' OR typname LIKE '%v5%';")).fetchall()
 
             return {
                 "ghost_oid": GHOST_OID,
-                "pg_depend": [{"class": d[0], "obj_id": d[1], "sub_id": d[2], "ref_class": d[3], "ref_obj_id": d[4], "deptype": d[6]} for d in deps],
-                "pg_attrdef": [{"table": d[0], "col": d[1], "expr": d[2]} for d in defaults],
-                "triggers": [{"name": t[0], "table": t[1]} for t in triggers],
-                "ghost_types": [{"oid": t[0], "name": t[1]} for t in ghost_types]
+                "pg_depend_raw": [{"cid": d[0], "oid": d[1], "sub": d[2], "rcid": d[3], "roid": d[4], "type": d[5]} for d in deps],
+                "defaults_brutos": [{"table": str(d[0]), "col_num": d[1], "adbin_sample": d[2][:100] if d[2] else ""} for d in vendas_defaults]
             }
-    except Exception as e: return {"error": str(e)}
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "trace": traceback.format_exc()}

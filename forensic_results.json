@@ -1,0 +1,3 @@
+﻿{
+    "error":  "(psycopg2.errors.InternalError_) cache lookup failed for type 21978\n\n[SQL: \n                SELECT \n                    adrelid::regclass as table_name,\n                    adnum as column_num,\n                    pg_get_expr(adbin, adrelid) as expression\n                FROM pg_attrdef\n                WHERE adbin::text LIKE \u0027%%21978%%\u0027;\n            ]\n(Background on this error at: https://sqlalche.me/e/20/2j85)"
+}
