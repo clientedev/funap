@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block page_title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="nome" class="form-label fw-bold small">Nome Completo</label>
+                            <input type="text" class="form-control" id="nome" name="nome"
+                                value="{{ usuario.nome if usuario else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold small">E-mail (Login)</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                value="{{ usuario.email if usuario else '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        {% if not usuario %}
+                        <div class="col-md-6">
+                            <label for="password" class="form-label fw-bold small">Senha Inicial</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <label for="perfil" class="form-label fw-bold small">Perfil de Acesso</label>
+                            <select class="form-select" id="perfil" name="perfil" required>
+                                <option value="comum" {% if usuario and usuario.perfil=='comum' %}selected{% endif %}>
+                                    Usuário Comum</option>
+                                <option value="admin" {% if usuario and usuario.perfil=='admin' %}selected{% endif %}>
+                                    Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="diretoria_id" class="form-label fw-bold small">Diretoria</label>
+                            <select class="form-select" id="diretoria_id" name="diretoria_id">
+                                <option value="">Nenhuma (Global)</option>
+                                {% for d in diretorias %}
+                                <option value="{{ d.id }}" {% if usuario and usuario.diretoria_id==d.id %}selected{%
+                                    endif %}>{{ d.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if usuario %}
+                        <div class="col-md-6 d-flex align-items-end mb-1">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if
+                                    usuario.ativo %}checked{% endif %}>
+                                <label class="form-check-label fw-bold small" for="ativo">Usuário Ativo</label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="/usuarios" class="btn btn-light px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">Salvar Usuário</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

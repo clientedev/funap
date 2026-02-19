@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %} - SISCONT{% endblock %}
+
+{% block page_title %}{% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informações do Cliente</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="nome" class="form-label fw-bold small">Nome / Razão Social</label>
+                            <input type="text" class="form-control" id="nome" name="nome"
+                                value="{{ cliente.nome if cliente else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="cnpj_cpf" class="form-label fw-bold small">CNPJ / CPF</label>
+                            <input type="text" class="form-control" id="cnpj_cpf" name="cnpj_cpf"
+                                value="{{ cliente.cnpj_cpf if cliente else '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold small">E-mail</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                value="{{ cliente.email if cliente else '' }}">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label fw-bold small">Telefone</label>
+                            <input type="text" class="form-control" id="telefone" name="telefone"
+                                value="{{ cliente.telefone if cliente else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endereco" class="form-label fw-bold small">Endereço</label>
+                            <input type="text" class="form-control" id="endereco" name="endereco"
+                                value="{{ cliente.endereco if cliente else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="/clientes" class="btn btn-light px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

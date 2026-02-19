@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Linhas de Produto - SISCONT{% endblock %}
+
+{% block page_title %}Gestão de Linhas de Produto{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="/linhas-produto/template" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-2"></i> Baixar Modelo
+    </a>
+    <form action="/linhas-produto/importar" method="post" enctype="multipart/form-data" class="d-inline-flex gap-2">
+        <input type="file" name="file" class="form-control form-control-sm" style="max-width: 200px;" required>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-file-import me-2"></i> Importar
+        </button>
+    </form>
+    <a href="/linhas-produto/novo" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i> Nova Linha
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for linha in linhas %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title fw-bold text-success">{{ linha.nome }}</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li><a class="dropdown-item" href="/linhas-produto/{{ linha.id }}/editar"><i
+                                        class="fas fa-edit me-2"></i> Editar</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-danger" href="/linhas-produto/{{ linha.id }}/excluir"
+                                    onclick="return confirm('Excluir esta linha?')"><i class="fas fa-trash me-2"></i>
+                                    Excluir</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="card-text text-muted small mt-2">
+                    {{ linha.descricao or 'Sem descrição.' }}
+                </p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-3">
+                <span class="badge bg-light text-success border">ATIVA</span>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-boxes fa-3x mb-3 d-block opacity-25"></i>
+        Nenhuma linha de produto cadastrada.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

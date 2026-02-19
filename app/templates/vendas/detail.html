@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Venda #{{ venda.numero or venda.id }} - SISCONT{% endblock %}
+
+{% block page_title %}Detalhes da Venda <span class="text-muted">#{{ venda.numero or venda.id }}</span>{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="/vendas" class="btn btn-light"><i class="fas fa-arrow-left me-2"></i> Voltar</a>
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarVenda">
+        <i class="fas fa-edit me-2"></i> Editar
+    </button>
+    <a href="/vendas/{{ venda.id }}/excluir" class="btn btn-outline-danger"
+        onclick="return confirm('ATENÇÃO: Isso excluirá a venda e todos os seus vínculos (propostas, empenhos, etc). Confirmar?')">
+        <i class="fas fa-trash me-2"></i> Excluir
+    </a>
+    {% if venda.status == 'aberta' %}
+    <button class="btn btn-success"><i class="fas fa-check-circle me-2"></i> Finalizar Venda</button>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Coluna Principal -->
+    <div class="col-lg-8">
+        <!-- Card de Informações Gerais -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <span>Informações do Objeto</span>
+                <span class="badge {% if venda.status == 'aberta' %}bg-primary{% else %}bg-success{% endif %}">{{
+                    venda.status | upper }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="text-muted small fw-bold d-block">Cliente</label>
+                        <span class="fw-bold">{{ venda.cliente.nome if venda.cliente else 'N/A' }}</span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="text-muted small fw-bold d-block">Linha de Produto</label>
+                        <span>{{ venda.linha_produto.nome if venda.linha_produto else 'Diversos' }}</span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="text-muted small fw-bold d-block">Processo SEI</label>
+                        <span class="text-primary fw-bold">{{ venda.processo_sei or '-' }}</span>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="text-muted small fw-bold d-block">Objeto / Descrição</label>
+                        <p class="mb-0">{{ venda.objeto }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Fluxo (Tabs) -->
+        <ul class="nav nav-pills mb-3 gap-2" id="vendaFlow" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active border" id="custo-tab" data-bs-toggle="pill" data-bs-target="#custo"
+                    type="button">1. Custo/Prazos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border" id="proposta-tab" data-bs-toggle="pill" data-bs-target="#proposta"
+                    type="button">2. Propostas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border" id="contrato-tab" data-bs-toggle="pill" data-bs-target="#contrato"
+                    type="button">3. Contratos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border" id="empenho-tab" data-bs-toggle="pill" data-bs-target="#empenho"
+                    type="button">4. Empenhos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border" id="pedido-tab" data-bs-toggle="pill" data-bs-target="#pedido"
+                    type="button">5. Pedidos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link border" id="nf-tab" data-bs-toggle="pill" data-bs-target="#nf" type="button">6.
+                    Notas Fiscais</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="vendaFlowContent">
+            <!-- Solicitação de Custo -->
+            <div class="tab-pane fade show active" id="custo" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Solicitação de Custo à DIPRO</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalCusto">
+                                <i class="fas fa-plus me-1"></i> Adicionar Solicitação
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Data Solic.</th>
+                                    <th>Data Resp.</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in venda.solicitacoes_custo %}
+                                <tr>
+                                    <td>{{ c.data_solicitacao.strftime('%d/%m/%Y') if c.data_solicitacao else '-' }}
+                                    </td>
+                                    <td>{{ c.data_resposta.strftime('%d/%m/%Y') if c.data_resposta else '-' }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ c.status }}</span></td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/solicitacao-custo/{{ c.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir esta solicitação?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">Nenhuma solicitação.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Propostas -->
+            <div class="tab-pane fade" id="proposta" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Propostas Comerciais</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalProposta">
+                                <i class="fas fa-plus me-1"></i> Adicionar Proposta
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Revisão</th>
+                                    <th>Vencimento</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in venda.propostas %}
+                                <tr>
+                                    <td>{{ p.numero }}</td>
+                                    <td>{{ p.revisao or '-' }}</td>
+                                    <td>{{ p.data_validade.strftime('%d/%m/%Y') if p.data_validade else '-' }}</td>
+                                    <td><span class="badge bg-info">{{ p.status }}</span></td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/proposta/{{ p.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir esta proposta?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Nenhuma proposta.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contratos -->
+            <div class="tab-pane fade" id="contrato" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Contratos</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalContrato">
+                                <i class="fas fa-plus me-1"></i> Adicionar Contrato
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Data Envio SEI</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in venda.contratos %}
+                                <tr>
+                                    <td>{{ c.numero }}</td>
+                                    <td>{{ c.data_envio_sei_contratos.strftime('%d/%m/%Y') if c.data_envio_sei_contratos
+                                        else '-' }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ c.status }}</span></td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/contrato/{{ c.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir este contrato?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">Nenhum contrato.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empenhos -->
+            <div class="tab-pane fade" id="empenho" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Notas de Empenho</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalEmpenho">
+                                <i class="fas fa-plus me-1"></i> Adicionar Empenho
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Recebimento</th>
+                                    <th>Prazo Entrega</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in venda.empenhos %}
+                                <tr>
+                                    <td>{{ e.numero }}</td>
+                                    <td>{{ e.data_recebimento.strftime('%d/%m/%Y') if e.data_recebimento else '-' }}
+                                    </td>
+                                    <td>{{ e.prazo_entrega.strftime('%d/%m/%Y') if e.prazo_entrega else '-' }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ e.status }}</span></td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/empenho/{{ e.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir este empenho?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Nenhum empenho.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pedidos -->
+            <div class="tab-pane fade" id="pedido" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Pedidos de Produção</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalPedido">
+                                <i class="fas fa-plus me-1"></i> Adicionar Pedido
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Prazo Entrega</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in venda.pedidos %}
+                                <tr>
+                                    <td>{{ p.numero }}</td>
+                                    <td>{{ p.prazo_entrega.strftime('%d/%m/%Y') if p.prazo_entrega else '-' }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ p.status }}</span></td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/pedido/{{ p.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir este pedido?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">Nenhum pedido.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas Fiscais -->
+            <div class="tab-pane fade" id="nf" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">Notas Fiscais / Entregas</h6>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                data-bs-target="#modalNF">
+                                <i class="fas fa-plus me-1"></i> Adicionar NF
+                            </button>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Emissão</th>
+                                    <th>Valor</th>
+                                    <th>Status Entrega</th>
+                                    <th class="text-end">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for n in venda.notas_fiscais %}
+                                <tr>
+                                    <td>{{ n.numero }}</td>
+                                    <td>{{ n.data_emissao.strftime('%d/%m/%Y') if n.data_emissao else '-' }}</td>
+                                    <td>R$ {{ "%.2f"|format(n.valor) if n.valor else '0.00' }}</td>
+                                    <td>
+                                        {% if n.status_entrega == 'ENTREGA TOTAL' %}
+                                        <span class="badge bg-success">{{ n.status_entrega }}</span>
+                                        {% elif n.status_entrega == 'ENTREGA PARCIAL' %}
+                                        <span class="badge bg-warning text-dark">{{ n.status_entrega }}</span>
+                                        {% else %}
+                                        <span class="badge bg-light text-dark border">{{ n.status_entrega }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="/vendas/{{ venda.id }}/nota-fiscal/{{ n.id }}/excluir"
+                                            class="btn btn-sm btn-link text-danger p-0" title="Excluir"
+                                            onclick="return confirm('Excluir esta nota fiscal?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Nenhuma nota fiscal.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna Lateral (Infos Rápidas) -->
+    <div class="col-lg-4">
+        <div class="card mb-4 bg-primary text-white border-0">
+            <div class="card-body">
+                <h6 class="small text-uppercase opacity-75 fw-bold">Valor Total (NF-e)</h6>
+                {% set total_nf = 0 %}
+                {% for nf in venda.notas_fiscais %}
+                {% set total_nf = total_nf + (nf.valor|float if nf.valor else 0) %}
+                {% endfor %}
+                <h3 class="fw-bold">R$ {{ "%.2f"|format(total_nf) }}</h3>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Responsável</div>
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-4x text-light mb-3"></i>
+                <h6 class="fw-bold mb-0">{{ venda.criado_por.nome if venda.criado_por else 'Sistema' }}</h6>
+                <p class="text-muted small">{{ venda.diretoria.nome if venda.diretoria else '-' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Proposta -->
+<div class="modal fade" id="modalProposta" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/proposta" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Proposta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número da Proposta</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: 2024-001">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Revisão</label>
+                    <input type="text" name="revisao" class="form-control" placeholder="00">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Valor (R$)</label>
+                    <input type="number" step="0.01" name="valor" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Data de Emissão</label>
+                    <input type="date" name="data_emissao" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Proposta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Venda -->
+<div class="modal fade" id="modalEditarVenda" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form action="/vendas/{{ venda.id }}/editar" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Venda #{{ venda.numero }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Processo SEI</label>
+                        <input type="text" name="processo_sei" class="form-control"
+                            value="{{ venda.processo_sei or '' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Modalidade</label>
+                        <select name="modalidade" class="form-select">
+                            <option value="VENDA" {% if venda.modalidade.value=='VENDA' %}selected{% endif %}>Venda
+                            </option>
+                            <option value="LICITACAO" {% if venda.modalidade.value=='LICITACAO' %}selected{% endif %}>
+                                Licitação</option>
+                            <option value="PRODUCAO" {% if venda.modalidade.value=='PRODUCAO' %}selected{% endif %}>
+                                Produção</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Objeto / Descrição</label>
+                        <textarea name="objeto" class="form-control" rows="3" required>{{ venda.objeto }}</textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select name="status_venda" class="form-select">
+                            <option value="aberta" {% if venda.status.value=='aberta' %}selected{% endif %}>Aberta
+                            </option>
+                            <option value="finalizada" {% if venda.status.value=='finalizada' %}selected{% endif %}>
+                                Finalizada</option>
+                            <option value="cancelada" {% if venda.status.value=='cancelada' %}selected{% endif %}>
+                                Cancelada</option>
+                        </select>
+                    </div>
+                    <!-- Hidden fields required by the router's update_venda but usually not changed here -->
+                    <input type="hidden" name="cliente_id" value="{{ venda.cliente_id }}">
+                    <input type="hidden" name="linha_produto_id" value="{{ venda.linha_produto_id }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Solicitação de Custo -->
+<div class="modal fade" id="modalCusto" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/vendas/{{ venda.id }}/solicitacao-custo" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Solicitação de Custo à DIPRO</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Data da Solicitação</label>
+                    <input type="date" name="data_solicitacao" class="form-control" required value="{{ today }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Descrição / Observações</label>
+                    <textarea name="descricao" class="form-control" rows="3"
+                        placeholder="Solicito composição de custos para..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

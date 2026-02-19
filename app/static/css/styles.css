@@ -1,0 +1,158 @@
+:root {
+    --primary-color: #2e7d32;
+    /* Verde FUNAP */
+    --primary-light: #60ad5e;
+    --primary-dark: #005005;
+    --secondary-color: #37474f;
+    /* Cinza Escuro */
+    --accent-color: #8bc34a;
+    --background-color: #f5f5f5;
+    --sidebar-width: 260px;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.3s;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background-color);
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: var(--sidebar-width);
+    background: var(--secondary-color);
+    color: white;
+    transition: all var(--transition-speed);
+}
+
+.sidebar-heading {
+    padding: 0.25rem 0.75rem;
+    background: #ffffff;
+    border-bottom: 2px solid var(--accent-color);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sidebar-heading img {
+    max-width: 100%;
+    height: auto;
+    max-height: 85px;
+    object-fit: contain;
+}
+
+.list-group-item {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.list-group-item:hover,
+.list-group-item.active {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    border-left: 4px solid var(--accent-color) !important;
+}
+
+.list-group-item i {
+    width: 20px;
+}
+
+/* Main Content area */
+#page-content-wrapper {
+    width: 100%;
+    transition: all var(--transition-speed);
+}
+
+.navbar {
+    background: white !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Cards & Components */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    padding: 1.25rem;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+/* Dashboard Widgets */
+.metric-card {
+    transition: transform 0.3s;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+}
+
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Tables */
+.table thead th {
+    background-color: #f8f9fa;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-top: none;
+}
+
+/* Login Page Styling */
+.login-body {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-color) 100%);
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    padding: 2rem;
+    border-radius: 20px;
+    background: white;
+}
+
+.login-logo {
+    display: block;
+    margin: 0 auto 1.5rem;
+    max-width: 200px;
+}

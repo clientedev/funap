@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SISCONT - FUNAP{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', path='/css/styles.css') }}" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <div class="d-flex" id="wrapper">
+        {% if user %}
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <img src="{{ url_for('static', path='/img/sidebar_logo.png') }}" alt="FUNAP">
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="/dashboard"
+                    class="list-group-item list-group-item-action {% if request.url.path == '/dashboard' %}active{% endif %}">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="/vendas"
+                    class="list-group-item list-group-item-action {% if '/vendas' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i> Vendas
+                </a>
+                <a href="/vendas"
+                    class="list-group-item list-group-item-action {% if request.url.path == '/vendas' %}active{% endif %}">
+                    <i class="fas fa-search"></i> Pesquisa Avançada
+                </a>
+
+                <hr class="mx-3 my-2 border-secondary">
+                <div class="px-3 mb-2 small text-uppercase text-secondary" style="font-size: 0.65rem;">Cadastros</div>
+
+                <a href="/clientes"
+                    class="list-group-item list-group-item-action {% if '/clientes' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-users"></i> Clientes
+                </a>
+                <a href="/linhas-produto"
+                    class="list-group-item list-group-item-action {% if '/linhas-produto' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-boxes"></i> Linhas de Produto
+                </a>
+
+                {% if user.perfil == 'admin' %}
+                <a href="/diretorias"
+                    class="list-group-item list-group-item-action {% if '/diretorias' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-sitemap"></i> Diretorias
+                </a>
+                <a href="/usuarios"
+                    class="list-group-item list-group-item-action {% if '/usuarios' in request.url.path %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i> Usuários
+                </a>
+                {% endif %}
+
+                <a href="/logout" class="list-group-item list-group-item-action mt-auto text-danger">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+                <div class="container-fluid">
+                    {% if user %}
+                    <button class="btn btn-outline-secondary btn-sm me-3" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    {% else %}
+                    <img src="{{ url_for('static', path='/img/logo.png') }}" alt="Logo" style="height: 30px;"
+                        class="me-2">
+                    <span class="fw-bold text-success">SISCONT</span>
+                    {% endif %}
+
+                    <div class="ms-auto d-flex align-items-center">
+                        {% if user %}
+                        <div class="me-3 text-end d-none d-md-block">
+                            <div class="small fw-bold">{{ user.nome }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.perfil | upper }}</div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-white rounded-circle shadow-sm"
+                                data-bs-toggle="dropdown" aria-expanded="false"
+                                style="width: 40px; height: 40px; padding: 0;">
+                                <i class="fas fa-user-circle fa-lg text-secondary"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-id-badge me-2"></i> Perfil</a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item text-danger" href="/logout"><i
+                                            class="fas fa-sign-out-alt me-2"></i> Sair</a></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0 fw-bold">{% block page_title %}{% endblock %}</h1>
+                    {% block actions %}{% endblock %}
+                </div>
+
+                {% block content %}{% endblock %}
+
+                <footer class="mt-5 pt-4 text-center border-top">
+                    <p class="text-muted small">© 2026 - FUNAP SISCONT</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bundle.min.js"></script>
+    <script>
+        document.getElementById("menu-toggle")?.addEventListener("click", function (e) {
+            e.preventDefault();
+            document.getElementById("wrapper").classList.toggle("toggled");
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

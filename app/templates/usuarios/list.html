@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários - SISCONT{% endblock %}
+
+{% block page_title %}Gestão de Usuários{% endblock %}
+
+{% block actions %}
+<a href="/usuarios/novo" class="btn btn-primary">
+    <i class="fas fa-user-plus me-2"></i> Novo Usuário
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Nome</th>
+                    <th>E-mail</th>
+                    <th>Perfil</th>
+                    <th>Diretoria</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td class="ps-4 fw-bold">{{ u.nome }}</td>
+                    <td>{{ u.email }}</td>
+                    <td><span class="badge {% if u.perfil == 'admin' %}bg-dark{% else %}bg-secondary{% endif %}">{{
+                            u.perfil | upper }}</span></td>
+                    <td>{{ u.diretoria.nome if u.diretoria else 'GERAL' }}</td>
+                    <td>
+                        {% if u.ativo %}
+                        <span class="text-success small"><i class="fas fa-check-circle me-1"></i> Ativo</span>
+                        {% else %}
+                        <span class="text-danger small"><i class="fas fa-times-circle me-1"></i> Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="/usuarios/{{ u.id }}/editar" class="btn btn-sm btn-light text-primary"><i
+                                class="fas fa-edit"></i></a>
+                        <a href="/usuarios/{{ u.id }}/excluir" class="btn btn-sm btn-light text-danger"
+                            onclick="return confirm('Excluir usuário?')"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

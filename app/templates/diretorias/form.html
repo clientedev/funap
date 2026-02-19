@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{% if diretoria %}Editar Diretoria{% else %}Nova Diretoria{% endif %}{% endblock %}
+
+{% block page_title %}{% if diretoria %}Editar Diretoria{% else %}Nova Diretoria{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label fw-bold small">Nome da Diretoria</label>
+                        <input type="text" class="form-control" id="nome" name="nome"
+                            value="{{ diretoria.nome if diretoria else '' }}" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="descricao" class="form-label fw-bold small">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao"
+                            rows="3">{{ diretoria.descricao if diretoria else '' }}</textarea>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="/diretorias" class="btn btn-light px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

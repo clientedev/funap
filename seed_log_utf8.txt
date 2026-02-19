@@ -1,0 +1,368 @@
+﻿python : Traceback 
+(most recent call 
+last):
+No linha:1 
+caractere:1
++ python app/seed_tes
+t_data.py > 
+seed_log.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Traceba   
+ ck (most recent     
+call last)::Stri    
+ng) [], RemoteEx    
+ception
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_e
+xecute(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^
+        cursor, 
+str_statement, effect
+ive_parameters, 
+context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\def
+ault.py", line 952, 
+in do_execute
+    cursor.execute(st
+atement, parameters)
+    ~~~~~~~~~~~~~~^^^
+^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalEr
+ror: no such column: 
+vendas.processo_sei
+
+The above exception 
+was the direct cause 
+of the following 
+exception:
+
+Traceback (most 
+recent call last):
+  File 
+"C:\Users\Gabriel Edu
+ardo\Documents\FUNAP\
+siscont\app\seed_test
+_data.py", line 112, 
+in seed_data
+    v1 = db.query(Ven
+da).filter(Venda.nume
+ro == "OS-2026-001").
+first()
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\orm\query.
+py", line 2759, in 
+first
+    return self.limit
+(1)._iter().first()  
+# type: ignore
+           
+~~~~~~~~~~~~~~~~~~~^^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\orm\query.
+py", line 2857, in 
+_iter
+    result: Union[Sca
+larResult[_T], 
+Result[_T]] = 
+self.session.execute(
+                     
+                     
+        
+~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_opt
+ions={"_sa_orm_load_o
+ptions": 
+self.load_options},
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\orm\sessio
+n.py", line 2351, in 
+execute
+    return self._exec
+ute_internal(
+           ~~~~~~~~~~
+~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_a
+dd_event,
+        ^^^^^^^^^^^^^
+^^^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\orm\sessio
+n.py", line 2249, in 
+_execute_internal
+    result: 
+Result[Any] = compile
+_state_cls.orm_execut
+e_statement(
+                     
+     ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\orm\contex
+t.py", line 306, in 
+orm_execute_statement
+    result = 
+conn.execute(
+        statement, 
+params or {}, executi
+on_options=execution_
+options
+    )
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1419, in 
+execute
+    return meth(
+        self,
+        
+distilled_parameters,
+        
+execution_options or 
+NO_OPTIONS,
+    )
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\sql\elemen
+ts.py", line 527, in 
+_execute_on_connectio
+n
+    return connection
+._execute_clauseeleme
+nt(
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~^
+        self, 
+distilled_params, 
+execution_options
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1641, in 
+_execute_clauseelemen
+t
+    ret = self._execu
+te_context(
+        dialect,
+    ...<8 lines>...
+        
+cache_hit=cache_hit,
+    )
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1846, in 
+_execute_context
+    return self._exec
+_single_context(
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~^
+        dialect, 
+context, statement, 
+parameters
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1986, in 
+_exec_single_context
+    self._handle_dbap
+i_exception(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~^
+        e, 
+str_statement, effect
+ive_parameters, 
+cursor, context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 2363, in 
+_handle_dbapi_excepti
+on
+    raise sqlalchemy_
+exception.with_traceb
+ack(exc_info[2]) 
+from e
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\bas
+e.py", line 1967, in 
+_exec_single_context
+    self.dialect.do_e
+xecute(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^
+        cursor, 
+str_statement, effect
+ive_parameters, 
+context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File 
+"C:\Users\Gabriel Edu
+ardo\AppData\Local\Pr
+ograms\Python\Python3
+14\Lib\site-packages\
+sqlalchemy\engine\def
+ault.py", line 952, 
+in do_execute
+    cursor.execute(st
+atement, parameters)
+    ~~~~~~~~~~~~~~^^^
+^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.Operat
+ionalError: (sqlite3.
+OperationalError) no 
+such column: 
+vendas.processo_sei
+[SQL: SELECT 
+vendas.id AS 
+vendas_id, 
+vendas.numero AS 
+vendas_numero, 
+vendas.processo_sei 
+AS 
+vendas_processo_sei, 
+vendas.objeto AS 
+vendas_objeto, 
+vendas.status AS 
+vendas_status, 
+vendas.modalidade AS 
+vendas_modalidade, 
+vendas.valor_total 
+AS 
+vendas_valor_total, 
+vendas.cliente_id AS 
+vendas_cliente_id, 
+vendas.diretoria_id 
+AS 
+vendas_diretoria_id, 
+vendas.linha_produto_
+id AS vendas_linha_pr
+oduto_id, 
+vendas.criado_por_id 
+AS vendas_criado_por_
+id, 
+vendas.created_at AS 
+vendas_created_at, 
+vendas.updated_at AS 
+vendas_updated_at 
+FROM vendas 
+WHERE vendas.numero 
+= ?
+ LIMIT ? OFFSET ?]
+[parameters: 
+('OS-2026-001', 1, 
+0)]
+(Background on this 
+error at: https://sql
+alche.me/e/20/e3q8)
+Tabelas limpas para re-seeding.

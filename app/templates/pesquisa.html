@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Pesquisa Avançada - SISCONT{% endblock %}
+
+{% block page_title %}Pesquisa Avançada{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-search me-2"></i> Filtros de Busca</h6>
+            </div>
+            <div class="card-body p-4">
+                <form action="/vendas/search" method="get">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nome do Cliente</label>
+                            <input type="text" name="cliente_nome" class="form-control"
+                                placeholder="Ex: Prefeitura Municipal...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Status da Venda</label>
+                            <select name="venda_status" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="aberta">Aberta</option>
+                                <option value="finalizada">Finalizada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Número da Proposta</label>
+                            <input type="text" name="proposta_numero" class="form-control" placeholder="P-2024-...">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Número do Pedido</label>
+                            <input type="text" name="pedido_numero" class="form-control" placeholder="PED-...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Número da Nota Fiscal</label>
+                            <input type="text" name="nota_fiscal_numero" class="form-control" placeholder="NF-...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Status da Proposta</label>
+                            <select name="proposta_status" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="enviada">Enviada</option>
+                                <option value="aprovada">Aprovada</option>
+                                <option value="rejeitada">Rejeitada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <button type="reset" class="btn btn-light px-4">Limpar Filtros</button>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">
+                            <i class="fas fa-search me-2"></i> BUSCAR AGORA
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

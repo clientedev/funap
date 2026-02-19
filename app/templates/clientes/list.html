@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - SISCONT{% endblock %}
+
+{% block page_title %}Gestão de Clientes{% endblock %}
+
+{% block actions %}
+<div class="d-flex gap-2">
+    <a href="/clientes/template" class="btn btn-outline-secondary">
+        <i class="fas fa-download me-2"></i> Baixar Modelo
+    </a>
+    <form action="/clientes/importar" method="post" enctype="multipart/form-data" class="d-inline-flex gap-2">
+        <input type="file" name="file" class="form-control form-control-sm" style="max-width: 200px;" required>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-file-import me-2"></i> Importar
+        </button>
+    </form>
+    <a href="/clientes/novo" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i> Novo Cliente
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Nome</th>
+                        <th>CNPJ/CPF</th>
+                        <th>E-mail</th>
+                        <th>Telefone</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold">{{ cliente.nome }}</div>
+                        </td>
+                        <td>{{ cliente.cnpj_cpf }}</td>
+                        <td>{{ cliente.email or '-' }}</td>
+                        <td>{{ cliente.telefone or '-' }}</td>
+                        <td class="text-end pe-4">
+                            <a href="/clientes/{{ cliente.id }}/editar" class="btn btn-sm btn-light text-primary me-1"
+                                title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="/clientes/{{ cliente.id }}/excluir" class="btn btn-sm btn-light text-danger"
+                                title="Excluir"
+                                onclick="return confirm('Tem certeza que deseja excluir este cliente?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-users fa-3x mb-3 d-block opacity-25"></i>
+                            Nenhum cliente cadastrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
