@@ -135,10 +135,10 @@
     new Chart(ctxEvolucao, {
         type: 'line',
         data: {
-            labels: [{% for label in metrics.graficos.evolucao.labels %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            labels: [{% for label in metrics.graficos.evolucao['labels'] %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
             label: 'Novas Vendas',
-            data: [{% for val in metrics.graficos.evolucao.values %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+            data: [{% for val in metrics.graficos.evolucao['values'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
     borderColor: '#2e7d32',
         borderWidth: 3,
             tension: 0.4,
@@ -172,9 +172,9 @@
     new Chart(ctxLinha, {
         type: 'doughnut',
         data: {
-            labels: [{% for label in metrics.graficos.linha_produto.labels %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            labels: [{% for label in metrics.graficos.linha_produto['labels'] %}"{{ label }}"{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
-            data: [{% for val in metrics.graficos.linha_produto.values %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
+            data: [{% for val in metrics.graficos.linha_produto['values'] %}{{ val }}{% if not loop.last %}, {% endif %} {% endfor %}],
     backgroundColor: [
         '#1b5e20', '#2e7d32', '#388e3c', '#43a047',
         '#4caf50', '#66bb6a', '#81c784'
