@@ -8,9 +8,9 @@ from app.database import Base
 
 
 class ContratoStatusEnum(str, enum.Enum):
-    ativo = "ATIVO"
-    encerrado = "ENCERRADO"
-    cancelado = "CANCELADO"
+    ativo = "ativo"
+    encerrado = "encerrado"
+    cancelado = "cancelado"
 
 
 class Contrato(Base):

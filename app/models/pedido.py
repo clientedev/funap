@@ -7,8 +7,8 @@ from app.database import Base
 
 
 class PedidoStatusEnum(str, enum.Enum):
-    pendente = "PENDENTE"
-    finalizado = "FINALIZADO"
+    pendente = "pendente"
+    finalizado = "finalizado"
 
 
 class Pedido(Base):

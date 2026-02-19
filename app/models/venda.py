@@ -7,18 +7,18 @@ from app.database import Base
 
 
 class VendaStatusEnum(str, enum.Enum):
-    em_andamento = "EM ANDAMENTO"
-    aguardando_proposta = "AGUARDANDO PROPOSTA"
-    aguardando_empenho = "AGUARDANDO EMPENHO"
-    faturado = "FATURADO"
-    finalizada = "FINALIZADA"
-    cancelada = "CANCELADA"
+    em_andamento = "em_andamento"
+    aguardando_proposta = "aguardando_proposta"
+    aguardando_empenho = "aguardando_empenho"
+    faturado = "faturado"
+    finalizada = "finalizada"
+    cancelada = "cancelada"
 
 
 class ModalidadeEnum(str, enum.Enum):
-    venda = "VENDA"
-    licitacao = "LICITACAO"
-    producao = "PRODUCAO"
+    venda = "venda"
+    licitacao = "licitacao"
+    producao = "producao"
 
 
 class Venda(Base):

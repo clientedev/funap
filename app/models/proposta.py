@@ -8,9 +8,9 @@ from app.database import Base
 
 
 class PropostaStatusEnum(str, enum.Enum):
-    pendente = "PENDENTE"
-    aprovada = "APROVADA"
-    cancelada = "CANCELADA"
+    pendente = "pendente"
+    aprovada = "aprovada"
+    cancelada = "cancelada"
 
 
 class Proposta(Base):
