@@ -41,6 +41,46 @@ body {
     width: var(--sidebar-width);
 }
 
+.sidebar-heading {
+    padding: 0.25rem 0.75rem;
+    background: #ffffff;
+    border-bottom: 2px solid var(--accent-color);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sidebar-heading img {
+    max-width: 100%;
+    height: auto;
+    max-height: 85px;
+    object-fit: contain;
+}
+
+.list-group-item {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.list-group-item:hover,
+.list-group-item.active {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    border-left: 4px solid var(--accent-color) !important;
+}
+
+.list-group-item i {
+    width: 20px;
+}
+
 #page-content-wrapper {
     width: 100%;
     transition: all var(--transition-speed);
@@ -138,12 +178,18 @@ body {
 }
 
 /* Tables */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .table thead th {
     background-color: #f8f9fa;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
     border-top: none;
+    white-space: nowrap;
 }
 
 /* Login Page Styling */
