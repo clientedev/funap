@@ -191,8 +191,6 @@ async def create_proposta(
     # Se a proposta for aprovada, atualiza status da venda
     if status.upper() == "APROVADA":
         venda.status = "AGUARDANDO EMPENHO"
-    elif venda.status == "AGUARDANDO PROPOSTA": # Se a venda estava aguardando proposta, agora está em análise
-        venda.status = "PROPOSTA EM ANÁLISE"
     
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
@@ -251,7 +249,7 @@ async def create_empenho(
     
     # Atualiza status da venda
     if venda.status == "AGUARDANDO EMPENHO":
-        venda.status = "EMPENHADO"
+        venda.status = "FATURADO"
     
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
@@ -281,8 +279,8 @@ async def create_pedido(
     db.add(p)
     
     # Atualiza status da venda
-    if venda.status == "EMPENHADO":
-        venda.status = "PEDIDO EMITIDO"
+    if venda.status == "FATURADO" or venda.status == "AGUARDANDO EMPENHO":
+        venda.status = "FATURADO"
     
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
