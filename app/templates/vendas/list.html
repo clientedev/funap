@@ -44,9 +44,9 @@
             <div class="col-md-2">
                 <select name="status" class="form-select">
                     <option value="">Status Venda</option>
-                    <option value="aberta" {% if request.query_params.get('status')=='aberta' %}selected{% endif %}>
+                    <option value="ABERTA" {% if request.query_params.get('status')=='ABERTA' %}selected{% endif %}>
                         Aberta</option>
-                    <option value="finalizada" {% if request.query_params.get('status')=='finalizada' %}selected{% endif
+                    <option value="FINALIZADA" {% if request.query_params.get('status')=='FINALIZADA' %}selected{% endif
                         %}>Finalizada</option>
                 </select>
             </div>
@@ -85,7 +85,7 @@
                         <td><span class="badge bg-light text-dark border">{{ venda.linha_produto.nome if
                                 venda.linha_produto else 'Diversos' }}</span></td>
                         <td>
-                            {% if venda.status == 'aberta' %}
+                            {% if venda.status == 'ABERTA' %}
                             <span class="badge bg-primary">ABERTA</span>
                             {% else %}
                             <span class="badge bg-success">FINALIZADA</span>

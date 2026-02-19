@@ -33,19 +33,25 @@ async def list_vendas(
     nfe_num: Optional[str] = None,
     status: Optional[str] = None,
     modalidade: Optional[str] = None,
+    proposta_status: Optional[str] = None,
+    pedido_status: Optional[str] = None,
+    linha_produto_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
-    diretoria_id = current_user.diretoria_id if current_user.perfil != "admin" else None
+    # Removido filtro de diretoria para visualização global
     vendas = venda_repo.get_by_filters(
         db, 
-        diretoria_id=diretoria_id,
+        diretoria_id=None,
         cliente_nome=q,
         proposta_numero=proposta_num,
         pedido_numero=pedido_num,
         nota_fiscal_numero=nfe_num,
         venda_status=status,
-        modalidade=modalidade
+        modalidade=modalidade,
+        proposta_status=proposta_status,
+        pedido_status=pedido_status,
+        linha_produto_id=linha_produto_id
     )
     return templates.TemplateResponse(
         "vendas/list.html",
@@ -93,8 +99,16 @@ async def create_venda(
     return RedirectResponse(url=f"/vendas/{venda.id}", status_code=303)
 
 @router.get("/pesquisa")
-async def redirect_pesquisa():
-    return RedirectResponse(url="/vendas", status_code=303)
+async def pesquisa_page(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(security.get_current_active_user)
+):
+    linhas = db.query(LinhaProduto).all()
+    return templates.TemplateResponse(
+        "pesquisa.html", 
+        {"request": request, "linhas": linhas, "user": current_user}
+    )
 
 @router.get("/{venda_id}")
 async def view_venda(
@@ -115,8 +129,10 @@ async def view_venda(
 @router.post("/{venda_id}/solicitacao-custo")
 async def create_solicitacao_custo(
     venda_id: int,
-    data_solicitacao: str = Form(...),
+    data_solicitacao: str = Form(None),
+    data_resposta: str = Form(None),
     descricao: str = Form(None),
+    valor_estimado: float = Form(None),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
@@ -128,8 +144,10 @@ async def create_solicitacao_custo(
     
     sc = SolicitacaoCusto(
         venda_id=venda_id,
-        data_solicitacao=datetime.strptime(data_solicitacao, "%Y-%m-%d").date(),
+        data_solicitacao=datetime.strptime(data_solicitacao, "%Y-%m-%d").date() if data_solicitacao else None,
+        data_resposta=datetime.strptime(data_resposta, "%Y-%m-%d").date() if data_resposta else None,
         descricao=descricao,
+        valor_estimado=valor_estimado,
         status="pendente"
     )
     db.add(sc)
@@ -144,6 +162,7 @@ async def create_proposta(
     revisao: str = Form(None),
     valor: float = Form(...),
     data_emissao: str = Form(...),
+    data_vencimento: str = Form(...),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
@@ -159,6 +178,7 @@ async def create_proposta(
         revisao=revisao,
         valor=valor,
         data_emissao=datetime.strptime(data_emissao, "%Y-%m-%d").date(),
+        data_vencimento=datetime.strptime(data_vencimento, "%Y-%m-%d").date(),
         status="PENDENTE"
     )
     db.add(p)
@@ -297,7 +317,7 @@ async def update_venda(
         "objeto": objeto,
         "modalidade": modalidade,
         "processo_sei": processo_sei,
-        "status": status_venda
+        "status": status_venda.upper() if status_venda else "ABERTA"
     }
     venda_repo.update(db, db_obj=venda, obj_in=update_data)
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
@@ -325,19 +345,25 @@ async def export_vendas_route(
     nfe_num: Optional[str] = None,
     status: Optional[str] = None,
     modalidade: Optional[str] = None,
+    proposta_status: Optional[str] = None,
+    pedido_status: Optional[str] = None,
+    linha_produto_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
-    diretoria_id = current_user.diretoria_id if current_user.perfil != "admin" else None
+    # Removido filtro de diretoria para exportação global
     vendas = venda_repo.get_by_filters(
         db, 
-        diretoria_id=diretoria_id, 
+        diretoria_id=None, 
         cliente_nome=q, 
         proposta_numero=proposta_num,
         pedido_numero=pedido_num,
         nota_fiscal_numero=nfe_num,
         venda_status=status,
-        modalidade=modalidade
+        modalidade=modalidade,
+        proposta_status=proposta_status,
+        pedido_status=pedido_status,
+        linha_produto_id=linha_produto_id
     )
     excel_file = export_vendas_to_excel(vendas, current_user.nome)
     return StreamingResponse(

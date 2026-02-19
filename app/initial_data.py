@@ -37,7 +37,11 @@ def init_db():
             db.commit()
             print(f"Admin inicial criado: {settings.FIRST_ADMIN_EMAIL}")
         else:
-            print("Admin inicial já existe.")
+            # Atualiza admin existente caso as variáveis de ambiente tenham mudado
+            admin_user.senha_hash = get_password_hash(settings.FIRST_ADMIN_PASSWORD)
+            admin_user.nome = settings.FIRST_ADMIN_NOME
+            db.commit()
+            print(f"Admin inicial atualizado: {settings.FIRST_ADMIN_EMAIL}")
 
     except Exception as e:
         print(f"Erro ao inicializar dados: {e}")

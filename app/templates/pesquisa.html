@@ -12,7 +12,7 @@
                 <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-search me-2"></i> Filtros de Busca</h6>
             </div>
             <div class="card-body p-4">
-                <form action="/vendas/search" method="get">
+                <form action="/vendas" method="get">
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Nome do Cliente</label>
@@ -31,24 +31,41 @@
                             <label class="form-label small fw-bold">Número da Proposta</label>
                             <input type="text" name="proposta_numero" class="form-control" placeholder="P-2024-...">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Linha de Produto</label>
+                            <select name="linha_produto_id" class="form-select">
+                                <option value="">Todas</option>
+                                {% for l in linhas %}
+                                <option value="{{ l.id }}">{{ l.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-bold">Número do Pedido</label>
                             <input type="text" name="pedido_numero" class="form-control" placeholder="PED-...">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Status do Pedido</label>
+                            <select name="pedido_status" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="PENDENTE">Pendente</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label small fw-bold">Número da Nota Fiscal</label>
                             <input type="text" name="nota_fiscal_numero" class="form-control" placeholder="NF-...">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-bold">Status da Proposta</label>
                             <select name="proposta_status" class="form-select">
                                 <option value="">Todos</option>
-                                <option value="enviada">Enviada</option>
-                                <option value="aprovada">Aprovada</option>
-                                <option value="rejeitada">Rejeitada</option>
+                                <option value="PENDENTE">Pendente</option>
+                                <option value="APROVADA">Aprovada</option>
+                                <option value="CANCELADA">Cancelada</option>
                             </select>
                         </div>
                     </div>

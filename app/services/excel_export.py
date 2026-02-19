@@ -28,6 +28,7 @@ def export_vendas_to_excel(vendas: List[Venda], user_nome: str) -> BytesIO:
             "Diretoria": v.diretoria.nome if v.diretoria else "N/A",
             "Status Venda": v.status.value if hasattr(v.status, 'value') else v.status,
             "Proposta": proposta.numero if proposta else "N/A",
+            "Vencimento Proposta": (proposta.data_vencimento.strftime("%d/%m/%Y") if proposta.data_vencimento else "N/A") if proposta else "N/A",
             "Status Proposta": (proposta.status.value if hasattr(proposta.status, 'value') else proposta.status) if proposta else "N/A",
             "Pedido": pedido.numero if pedido else "N/A",
             "Status Pedido": (pedido.status.value if hasattr(pedido.status, 'value') else pedido.status) if pedido else "N/A",

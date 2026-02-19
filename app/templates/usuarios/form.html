@@ -33,7 +33,8 @@
                         <div class="col-md-6">
                             <label for="perfil" class="form-label fw-bold small">Perfil de Acesso</label>
                             <select class="form-select" id="perfil" name="perfil" required>
-                                <option value="comum" {% if usuario and usuario.perfil=='comum' %}selected{% endif %}>
+                                <option value="usuario" {% if usuario and usuario.perfil=='usuario' %}selected{% endif
+                                    %}>
                                     Usuário Comum</option>
                                 <option value="admin" {% if usuario and usuario.perfil=='admin' %}selected{% endif %}>
                                     Administrador</option>

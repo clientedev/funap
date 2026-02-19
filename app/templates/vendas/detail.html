@@ -14,7 +14,7 @@
         onclick="return confirm('ATENÇÃO: Isso excluirá a venda e todos os seus vínculos (propostas, empenhos, etc). Confirmar?')">
         <i class="fas fa-trash me-2"></i> Excluir
     </a>
-    {% if venda.status == 'aberta' %}
+    {% if venda.status == 'ABERTA' %}
     <button class="btn btn-success"><i class="fas fa-check-circle me-2"></i> Finalizar Venda</button>
     {% endif %}
 </div>
@@ -108,7 +108,8 @@
                                     <td>{{ c.data_solicitacao.strftime('%d/%m/%Y') if c.data_solicitacao else '-' }}
                                     </td>
                                     <td>{{ c.data_resposta.strftime('%d/%m/%Y') if c.data_resposta else '-' }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ c.status }}</span></td>
+                                    <td>R$ {{ "%.2f"|format(c.valor_estimado) if c.valor_estimado else '-' }}</td>
+                                    <td><span class="badge bg-secondary">{{ c.status }}</span></td>
                                     <td class="text-end">
                                         <a href="/vendas/{{ venda.id }}/solicitacao-custo/{{ c.id }}/excluir"
                                             class="btn btn-sm btn-link text-danger p-0" title="Excluir"
@@ -154,8 +155,16 @@
                                 <tr>
                                     <td>{{ p.numero }}</td>
                                     <td>{{ p.revisao or '-' }}</td>
-                                    <td>{{ p.data_validade.strftime('%d/%m/%Y') if p.data_validade else '-' }}</td>
-                                    <td><span class="badge bg-info">{{ p.status }}</span></td>
+                                    <td>{{ p.data_vencimento.strftime('%d/%m/%Y') if p.data_vencimento else '-' }}</td>
+                                    <td>
+                                        {% if p.status == 'APROVADA' %}
+                                        <span class="badge bg-success">APROVADA</span>
+                                        {% elif p.status == 'CANCELADA' %}
+                                        <span class="badge bg-danger">CANCELADA</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">PENDENTE</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         <a href="/vendas/{{ venda.id }}/proposta/{{ p.id }}/excluir"
                                             class="btn btn-sm btn-link text-danger p-0" title="Excluir"
@@ -416,9 +425,15 @@
                     <label class="form-label fw-bold small">Valor (R$)</label>
                     <input type="number" step="0.01" name="valor" class="form-control" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold small">Data de Emissão</label>
-                    <input type="date" name="data_emissao" class="form-control" required>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data de Emissão</label>
+                        <input type="date" name="data_emissao" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data de Vencimento</label>
+                        <input type="date" name="data_vencimento" class="form-control" required>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -492,14 +507,23 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold small">Data da Solicitação</label>
-                    <input type="date" name="data_solicitacao" class="form-control" required value="{{ today }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data Solicitação</label>
+                        <input type="date" name="data_solicitacao" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data Resposta</label>
+                        <input type="date" name="data_resposta" class="form-control">
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold small">Descrição / Observações</label>
-                    <textarea name="descricao" class="form-control" rows="3"
-                        placeholder="Solicito composição de custos para..."></textarea>
+                    <label class="form-label fw-bold small">Valor Estimado (R$)</label>
+                    <input type="number" step="0.01" name="valor_estimado" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Descrição/Objeto</label>
+                    <textarea name="descricao" class="form-control" rows="2"></textarea>
                 </div>
             </div>
             <div class="modal-footer">

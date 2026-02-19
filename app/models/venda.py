@@ -7,9 +7,9 @@ from app.database import Base
 
 
 class VendaStatusEnum(str, enum.Enum):
-    aberta = "aberta"
-    finalizada = "finalizada"
-    cancelada = "cancelada"
+    aberta = "ABERTA"
+    finalizada = "FINALIZADA"
+    cancelada = "CANCELADA"
 
 
 class ModalidadeEnum(str, enum.Enum):
