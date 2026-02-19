@@ -22,7 +22,7 @@ class SolicitacaoCusto(Base):
     data_solicitacao: Mapped[date | None] = mapped_column(Date, nullable=True)
     data_resposta: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[SolicitacaoCustoStatusEnum] = mapped_column(
-        SAEnum(SolicitacaoCustoStatusEnum, name="solicitacaocustostatusenum_v4"), default=SolicitacaoCustoStatusEnum.pendente, nullable=False
+        SAEnum(SolicitacaoCustoStatusEnum, name="solicitacaocustostatusenum_v5"), default=SolicitacaoCustoStatusEnum.pendente, nullable=False
     )
     observacoes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

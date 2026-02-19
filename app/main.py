@@ -1,4 +1,4 @@
-# SISCONT - Deploy V10 (Final OID Fix - Auto Nuke) - 19/02/2026 14:35
+# SISCONT - Deploy V11 (Scorched Earth - V5) - 19/02/2026 14:40
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -17,17 +17,17 @@ def run_enum_migration():
     if "sqlite" in db_url:
         return
     
-    # Names with _v4 suffix to guarantee fresh OIDs
+    # V5 Suffix to ensure a total OID break
     enums_to_check = {
-        "vendastatusenum_v4": ["em_andamento", "aguardando_proposta", "aguardando_empenho", "faturado", "finalizada", "cancelada"],
-        "modalidadeenum_v4": ["venda", "licitacao", "producao"],
-        "propostastatusenum_v4": ["pendente", "aprovada", "cancelada"],
-        "contratostatusenum_v4": ["ativo", "encerrado", "cancelado"],
-        "empenhostatusenum_v4": ["pendente", "emitido", "cancelado"],
-        "pedidostatusenum_v4": ["pendente", "finalizado"],
-        "nfestatusentregaenum_v4": ["pendente", "parcial", "total"],
-        "solicitacaocustostatusenum_v4": ["pendente", "aprovada", "recusada"],
-        "perfilenum_v4": ["admin", "usuario", "comercial", "financeiro"]
+        "vendastatusenum_v5": ["em_andamento", "aguardando_proposta", "aguardando_empenho", "faturado", "finalizada", "cancelada"],
+        "modalidadeenum_v5": ["venda", "licitacao", "producao"],
+        "propostastatusenum_v5": ["pendente", "aprovada", "cancelada"],
+        "contratostatusenum_v5": ["ativo", "encerrado", "cancelado"],
+        "empenhostatusenum_v5": ["pendente", "emitido", "cancelado"],
+        "pedidostatusenum_v5": ["pendente", "finalizado"],
+        "nfestatusentregaenum_v5": ["pendente", "parcial", "total"],
+        "solicitacaocustostatusenum_v5": ["pendente", "aprovada", "recusada"],
+        "perfilenum_v5": ["admin", "usuario", "comercial", "financeiro"]
     }
     
     try:
@@ -68,19 +68,23 @@ def run_enum_migration():
                 except Exception as e:
                     print(f"Erro ao processar tipo {type_name}: {e}")
 
-            # 2. Normalizar e Reparar Colunas (mapeando para os novos tipos _v4)
+            # 2. Reconstrução de Colunas (mapeando para os novos tipos _v5)
+            # ESTRATÉGIA NUCLEAR: Para a tabela 'vendas', que é a mais crítica, 
+            # vamos DROP e ADD as colunas em vez de apenas ALTER TYPE.
+            # Isso garante 100% de quebra com o OID antigo.
+            
             target_cols = [
-                ("vendas", "status", "vendastatusenum_v4", "'em_andamento'"),
-                ("vendas", "modalidade", "modalidadeenum_v4", "'venda'"),
-                ("propostas", "status", "propostastatusenum_v4", "'pendente'"),
-                ("contratos", "status", "contratostatusenum_v4", "'ativo'"),
-                ("empenhos", "status", "empenhostatusenum_v4", "'pendente'"),
-                ("pedidos", "status", "pedidostatusenum_v4", "'pendente'"),
-                ("notas_fiscais", "status_entrega", "nfestatusentregaenum_v4", "'pendente'"),
-                ("solicitacoes_custo", "status", "solicitacaocustostatusenum_v4", "'pendente'"),
-                ("usuarios", "perfil", "perfilenum_v4", "'usuario'")
+                ("vendas", "status", "vendastatusenum_v5", "'em_andamento'"),
+                ("vendas", "modalidade", "modalidadeenum_v5", "'venda'"),
+                ("propostas", "status", "propostastatusenum_v5", "'pendente'"),
+                ("contratos", "status", "contratostatusenum_v5", "'ativo'"),
+                ("empenhos", "status", "empenhostatusenum_v5", "'pendente'"),
+                ("pedidos", "status", "pedidostatusenum_v5", "'pendente'"),
+                ("notas_fiscais", "status_entrega", "nfestatusentregaenum_v5", "'pendente'"),
+                ("solicitacoes_custo", "status", "solicitacaocustostatusenum_v5", "'pendente'"),
+                ("usuarios", "perfil", "perfilenum_v5", "'usuario'")
             ]
-
+            
             for table, col, type_name, default_val in target_cols:
                 try:
                     # Garantir que a coluna existe
@@ -92,20 +96,26 @@ def run_enum_migration():
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {type_name} DEFAULT {default_val};"))
                         print(f"Added column: {table}.{col}")
                     else:
-                        # 1. Remover default (necessário para mudar o tipo)
-                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
-                        # 2. Converter para TEXT temporariamente para quebrar o vínculo com o OID antigo
-                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
-                        # 3. Normalizar
-                        conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}) WHERE {col} IS NOT NULL;"))
-                        # 4. Converter para o novo V4 (Fresh OID)
-                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
-                        # 5. Restaurar default
-                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
+                        if table == "vendas":
+                            # NUCLEAR: Drop and Re-add para limpar OID cache do Postgres
+                            print(f"NUCLEAR RECONSTRUCTION: {table}.{col}")
+                            conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS {col} CASCADE;"))
+                            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {type_name} DEFAULT {default_val};"))
+                        else:
+                            # 1. Remover default (necessário para mudar o tipo)
+                            conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
+                            # 2. Converter para TEXT temporariamente para quebrar o vínculo com o OID antigo
+                            conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
+                            # 3. Normalizar
+                            conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}) WHERE {col} IS NOT NULL;"))
+                            # 4. Converter para o novo V5 (Fresh OID)
+                            conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
+                            # 5. Restaurar default
+                            conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
+                        
                         print(f"Repaired column: {table}.{col}")
                 except Exception as e:
                     print(f"Erro ao reparar coluna {table}.{col}: {e}")
-                    # Tentar garantir que ao menos seja TEXT se tudo falhar, para não quebrar a query
                     try:
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
                     except: pass
@@ -133,10 +143,10 @@ def run_enum_migration():
 
             # Limpar caches para forçar recarga de metadados
             conn.execute(text("DISCARD ALL;"))
-            print("MIGRAÇÃO V10 CONCLUÍDA COM SUCESSO. ✅")
+            print("MIGRAÇÃO V11 (SCORCHED EARTH) CONCLUÍDA. ✅")
             
     except Exception:
-        print("Erro na migração V10 de enums:")
+        print("Erro na migração V11 de enums:")
         traceback.print_exc()
 
 @asynccontextmanager
