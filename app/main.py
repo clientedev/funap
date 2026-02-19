@@ -1,4 +1,4 @@
-# SISCONT - Deploy V8 (Sync Remote Repair) - 19/02/2026 14:18
+# SISCONT - Deploy V9 (Aggressive Cache Fix) - 19/02/2026 14:25
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -33,6 +33,11 @@ def run_enum_migration():
     try:
         # IMPORTANTE: Usar AUTOCOMMIT para comandos de TYPE no Postgres
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            # 0. Limpar planos e caches da sessão ATUAL e definir timeouts
+            conn.execute(text("DISCARD ALL;"))
+            conn.execute(text("SET lock_timeout = '5s';"))
+            conn.execute(text("SET statement_timeout = '30s';"))
+            
             # 1. Garantir que os TIPOS V4 existem
             for type_name, labels in enums_to_check.items():
                 try:
@@ -40,14 +45,15 @@ def run_enum_migration():
                     if not res:
                         labels_str = ", ".join([f"'{l}'" for l in labels])
                         conn.execute(text(f"CREATE TYPE {type_name} AS ENUM ({labels_str});"))
+                        print(f"Created type: {type_name}")
                     else:
                         for label in labels:
                             try:
                                 conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS '{label}';"))
                             except Exception:
                                 pass
-                except Exception:
-                    print(f"Erro ao processar tipo {type_name}")
+                except Exception as e:
+                    print(f"Erro ao processar tipo {type_name}: {e}")
 
             # 2. Normalizar e Reparar Colunas (mapeando para os novos tipos _v4)
             target_cols = [
@@ -72,13 +78,23 @@ def run_enum_migration():
                     if not res:
                         conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {type_name} DEFAULT {default_val};"))
                     else:
-                        # Normalizar dados antes de converter
-                        conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}::TEXT) WHERE {col} IS NOT NULL;"))
-                        # Converter tipo para V4 de forma segura
+                        # 1. Remover default (necessário para mudar o tipo)
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP DEFAULT;"))
+                        # 2. Converter para TEXT temporariamente para quebrar o vínculo com o OID antigo
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
+                        # 3. Normalizar
+                        conn.execute(text(f"UPDATE {table} SET {col} = LOWER({col}) WHERE {col} IS NOT NULL;"))
+                        # 4. Converter para o novo V4 (Fresh OID)
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE {type_name} USING {col}::{type_name};"))
+                        # 5. Restaurar default
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} SET DEFAULT {default_val};"))
+                        print(f"Repaired column: {table}.{col}")
                 except Exception as e:
                     print(f"Erro ao reparar coluna {table}.{col}: {e}")
+                    # Tentar garantir que ao menos seja TEXT se tudo falhar, para não quebrar a query
+                    try:
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TEXT USING {col}::TEXT;"))
+                    except: pass
 
             # 3. Colunas extras importantes
             extra_cols = [
