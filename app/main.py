@@ -118,5 +118,20 @@ async def debug_db_schema():
                 WHERE table_name IN ({','.join([f"'{t}'" for t in target_tables])})
                 AND (column_name LIKE '%v19%' OR column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
             """)).fetchall()
-            return {"columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res]}
+            
+            # Novo check de OID
+            oid_check = conn.execute(text("SELECT typname FROM pg_type WHERE oid = 21978")).fetchone()
+            
+            # Check de constraints legadas
+            constraints = conn.execute(text("""
+                SELECT conname, contype 
+                FROM pg_constraint 
+                WHERE conrelid = 'vendas'::regclass
+            """)).fetchall()
+            
+            return {
+                "columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in schema_res],
+                "oid_21978": oid_check[0] if oid_check else "NOT FOUND",
+                "vendas_constraints": [{"name": c[0], "type": c[1]} for c in constraints]
+            }
     except Exception as e: return {"error": str(e)}
