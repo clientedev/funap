@@ -441,47 +441,48 @@
 <div class="modal fade" id="modalProposta" tabindex="-1">
     <div class="modal-dialog">
         <form action="/vendas/{{ venda.id }}/proposta" method="post" class="modal-content">
-            <h5 class="modal-title">Nova Proposta</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body">
-        <div class="mb-3">
-            <label class="form-label fw-bold small">Número da Proposta</label>
-            <input type="text" name="numero" class="form-control" required placeholder="Ex: 2024-001">
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold small">Revisão</label>
-            <input type="text" name="revisao" class="form-control" placeholder="00">
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold small">Valor (R$)</label>
-            <input type="number" step="0.01" name="valor" class="form-control" required>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold small">Data de Emissão</label>
-                <input type="date" name="data_emissao" class="form-control" required>
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Proposta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold small">Data de Vencimento</label>
-                <input type="date" name="data_vencimento" class="form-control" required>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Número da Proposta</label>
+                    <input type="text" name="numero" class="form-control" required placeholder="Ex: 2024-001">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Revisão</label>
+                    <input type="text" name="revisao" class="form-control" placeholder="00">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Valor (R$)</label>
+                    <input type="number" step="0.01" name="valor" class="form-control" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data de Emissão</label>
+                        <input type="date" name="data_emissao" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small">Data de Vencimento</label>
+                        <input type="date" name="data_vencimento" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Status</label>
+                    <select name="status" class="form-select" required>
+                        <option value="pendente">PENDENTE</option>
+                        <option value="aprovada">APROVADA</option>
+                        <option value="cancelada">CANCELADA</option>
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold small">Status</label>
-            <select name="status" class="form-select" required>
-                <option value="pendente">PENDENTE</option>
-                <option value="aprovada">APROVADA</option>
-                <option value="cancelada">CANCELADA</option>
-            </select>
-        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary">Salvar Proposta</button>
+            </div>
+        </form>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
-        <button type="submit" class="btn btn-primary">Salvar Proposta</button>
-    </div>
-    </form>
-</div>
 </div>
 
 <!-- Modal Contrato -->
@@ -578,7 +579,8 @@
 <!-- Modal Nota Fiscal -->
 <div class="modal fade" id="modalNF" tabindex="-1">
     <div class="modal-dialog">
-        <form action="/vendas/{{ venda.id }}/nota-fiscal" method="post" class="modal-content">
+        <form action="/vendas/{{ venda.id }}/nota-fiscal" method="post" enctype="multipart/form-data"
+            class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Nova Nota Fiscal</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -605,6 +607,10 @@
                         <option value="ENTREGA PARCIAL">ENTREGA PARCIAL</option>
                         <option value="ENTREGA TOTAL">ENTREGA TOTAL</option>
                     </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-primary">Anexar Documento (PDF/Imagem)</label>
+                    <input type="file" name="arquivo_nf" class="form-control" accept=".pdf,.jpg,.png,.jpeg">
                 </div>
             </div>
             <div class="modal-footer">

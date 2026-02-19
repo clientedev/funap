@@ -27,6 +27,7 @@ class NotaFiscal(Base):
         SAEnum(NFEStatusEntregaEnum, native_enum=False), name="status_entrega_v19", default=NFEStatusEntregaEnum.pendente, nullable=False, index=True
     )
     chave_acesso: Mapped[str | None] = mapped_column(String(44), nullable=True)
+    documento_pdf: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

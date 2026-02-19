@@ -1,7 +1,7 @@
 """Router de Vendas."""
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Query, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Path, UploadFile, File
 from fastapi.responses import StreamingResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
@@ -285,7 +285,6 @@ async def create_pedido(
     db.commit()
     return RedirectResponse(url=f"/vendas/{venda_id}", status_code=303)
 
-# Adicionar Nota Fiscal
 @router.post("/{venda_id}/nota-fiscal")
 async def create_nota_fiscal(
     venda_id: int,
@@ -293,6 +292,7 @@ async def create_nota_fiscal(
     data_emissao: str = Form(...),
     valor: float = Form(...),
     status_entrega: str = Form(...),
+    arquivo_nf: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(security.get_current_active_user)
 ):
@@ -302,12 +302,26 @@ async def create_nota_fiscal(
     
     security.check_permission(current_user, diretoria_id=venda.diretoria_id)
     
+    # Processar arquivo se enviado
+    nome_arquivo = None
+    if arquivo_nf and arquivo_nf.filename:
+        import os
+        import uuid
+        upload_dir = "app/static/uploads/nfs"
+        os.makedirs(upload_dir, exist_ok=True)
+        ext = os.path.splitext(arquivo_nf.filename)[1]
+        nome_arquivo = f"nf_{uuid.uuid4()}{ext}"
+        filepath = os.path.join(upload_dir, nome_arquivo)
+        with open(filepath, "wb") as f:
+            f.write(await arquivo_nf.read())
+    
     nf = NotaFiscal(
         venda_id=venda_id,
         numero=numero,
         data_emissao=datetime.strptime(data_emissao, "%Y-%m-%d").date(),
         valor=valor,
-        status_entrega=status_entrega.lower()
+        status_entrega=status_entrega.lower(),
+        documento_pdf=nome_arquivo
     )
     db.add(nf)
     
