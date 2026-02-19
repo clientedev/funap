@@ -158,13 +158,14 @@ app.include_router(linhas_produto.router)
 async def debug_db_schema():
     from sqlalchemy import text
     from app.database import engine
+    target_tables = ['vendas', 'propostas', 'contratos', 'empenhos', 'pedidos', 'notas_fiscais', 'solicitacoes_custo', 'usuarios']
     try:
         with engine.connect() as conn:
-            res = conn.execute(text("""
+            res = conn.execute(text(f"""
                 SELECT table_name, column_name, data_type 
                 FROM information_schema.columns 
-                WHERE table_name IN ('vendas', 'usuarios') 
-                AND column_name IN ('status', 'perfil')
+                WHERE table_name IN ({','.join([f"'{t}'" for t in target_tables])})
+                AND (column_name LIKE '%status%' OR column_name = 'perfil' OR column_name = 'modalidade')
             """)).fetchall()
             return {"columns": [{"table": r[0], "column": r[1], "type": r[2]} for r in res]}
     except Exception as e:
