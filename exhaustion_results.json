@@ -1,0 +1,29 @@
+﻿{
+    "counts":  {
+                   "vendas":  1,
+                   "solicitacoes_custo":  0,
+                   "propostas":  0,
+                   "contratos":  0,
+                   "empenhos":  0,
+                   "pedidos":  0,
+                   "notas_fiscais":  0
+               },
+    "backup_tables":  [
+
+                      ],
+    "venda_columns":  [
+                          "id",
+                          "numero",
+                          "processo_sei",
+                          "objeto",
+                          "valor_total",
+                          "cliente_id",
+                          "diretoria_id",
+                          "linha_produto_id",
+                          "criado_por_id",
+                          "created_at",
+                          "updated_at",
+                          "status_v19",
+                          "modalidade_v19"
+                      ]
+}
