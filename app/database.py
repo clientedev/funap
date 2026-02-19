@@ -17,23 +17,27 @@ engine = create_engine(
     connect_args=connect_args
 )
 
-# --- SOLUÇÃO CIRÚRGICA PARA OID CACHE (V22) ---
+# --- SOLUÇÃO ROBUSTA PARA TRANSACTION ABORT & OID CACHE (V27) ---
 if not settings.DATABASE_URL.startswith("sqlite"):
-    @event.listens_for(engine, "connect")
-    def connect_listener(dbapi_connection, connection_record):
+    @event.listens_for(engine, "checkout")
+    def checkout_listener(dbapi_connection, connection_record, connection_proxy):
         """
-        Garante que toda nova conexão ou conexão retirada do pool limpe seus caches internos do Postgres.
-        Isso mata o erro 'cache lookup failed for type 21978' na raiz.
+        Garante que toda conexão retirada do pool esteja limpa.
+        O checkout_listener é mais seguro que o connect_listener pois roda em cada requisição.
         """
         cursor = dbapi_connection.cursor()
         try:
+            # Se a conexão estiver em estado de erro (InFailedSqlTransaction), o rollback limpa.
+            dbapi_connection.rollback()
             cursor.execute("DEALLOCATE ALL;")
             cursor.execute("DISCARD ALL;")
-        except:
-            pass
+        except Exception:
+            # Se falhar aqui, tentamos um rollback final forçado
+            try: dbapi_connection.rollback()
+            except: pass
         finally:
             cursor.close()
-# ---------------------------------------------
+# -------------------------------------------------------------
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
